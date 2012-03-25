@@ -12,26 +12,28 @@
     </echo>
   </target>
 
-  <target name="dist" depends="wikiru-dist, kinopoisk-dist"
+  <target name="dist" depends="wiki-dist, kinopoisk-dist"
           description="Creates archive release files of all plugins.">
   </target>
 
-  <target name="wikiru-dist" depends="-init"
+  <target name="wiki-dist"
           description="Creates an archive release file of WikipediaRu plugin.">
-    <echo message="Creating an archive release file of ${wikiru.src.dir} plugin..." />
-    <zip destfile="${dist.dir}/${wikiru.plugin.dirName}-${wikiru.plugin.version}.zip"
-         update="true">
-      <zipfileset dir="${wikiru.src.dir}" prefix="${wikiru.plugin.dirName}" />
-    </zip>
+    <antcall target="-create-distro">
+      <param name="arg.plugin.name" value="${wikiru.project.name}" />
+      <param name="arg.base.filename" value="${wikiru.plugin.dirName}-${wikiru.plugin.version}" />
+      <param name="arg.src.dir" value="${wikiru.src.dir}" />
+      <param name="arg.dir.name" value="${wikiru.plugin.dirName}" />
+    </antcall>
   </target>
 
-  <target name="kinopoisk-dist" depends="-init"
+  <target name="kinopoisk-dist"
           description="Creates an archive release file of KinoPoiskRu plugin.">
-    <echo message="Creating an archive release file of ${kinopoisk.src.dir} plugin..." />
-    <zip destfile="${dist.dir}/${kinopoisk.plugin.dirName}-${kinopoisk.plugin.version}.zip"
-         update="true">
-      <zipfileset dir="${kinopoisk.src.dir}" prefix="${kinopoisk.plugin.dirName}" />
-    </zip>
+    <antcall target="-create-distro">
+      <param name="arg.plugin.name" value="${kinopoisk.project.name}" />
+      <param name="arg.base.filename" value="${kinopoisk.plugin.dirName}-${kinopoisk.plugin.version}" />
+      <param name="arg.src.dir" value="${kinopoisk.src.dir}" />
+      <param name="arg.dir.name" value="${kinopoisk.plugin.dirName}" />
+    </antcall>
   </target>
 
   <target name="clean"
@@ -48,6 +50,22 @@
     </tstamp>
     <mkdir dir="${build.dir}" />
     <mkdir dir="${dist.dir}" />
+  </target>
+
+  <target name="-create-distro" depends="-init"
+          description="Creates distribution files.">
+    <echo message="Creating distribution files for the ${arg.plugin.name} plugin..." />
+    <property name="plugin.zip.filepath" value="${dist.dir}/${arg.base.filename}.zip" />
+    <zip destfile="${plugin.zip.filepath}" update="true">
+      <zipfileset dir="${arg.src.dir}" prefix="${arg.dir.name}" />
+    </zip>
+    <property name="plugin.gz.filepath" value="${dist.dir}/${arg.base.filename}.tar.gz" />
+    <tar destfile="${plugin.gz.filepath}" compression="gzip">
+      <zipfileset dir="${arg.src.dir}" prefix="${arg.dir.name}" />
+    </tar>
+    <echo />
+    <echo message="zip    -> ${plugin.gz.filepath}." />
+    <echo message="tar.gz -> ${plugin.zip.filepath}." />
   </target>
 
 </project>
