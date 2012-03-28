@@ -1,4 +1,5 @@
-# TheMovieDB
+# -*- coding: utf-8 -*-
+# TheMoviesDB
 # Multi-language support added by Aqntbghd
 
 # TODO : Deal with languages AND locations as TMDB makes the difference between them.
@@ -6,35 +7,55 @@
 
 import time
 
+# TODO - ----------------------------- - - - - - - -- search for a movie - can't use hash?
+# http://api.themoviedb.org/2.1/methods/Movie.search
+# http://api.themoviedb.org/2.1/Movie.search/ru/xml/a3dc111e66105f6387e99393813ae4d5/%s
 TMDB_GETINFO_IMDB = 'http://api.themoviedb.org/2.1/Movie.imdbLookup/en/json/a3dc111e66105f6387e99393813ae4d5/%s'
 TMDB_GETINFO_TMDB = 'http://api.themoviedb.org/2.1/Movie.getInfo/%s/json/a3dc111e66105f6387e99393813ae4d5/%s'
 TMDB_GETINFO_HASH = 'http://api.themoviedb.org/2.1/Hash.getInfo/%s/json/a3dc111e66105f6387e99393813ae4d5/%s'
 
+
+# Preference item names.
+PREF_IS_DEBUG_NAME = 'tmdbru_pref_is_debug'
+PREF_LOG_LEVEL_NAME = 'tmdbru_pref_log_level'
+PREF_CACHE_TIME_NAME = 'tmdbru_pref_cache_time'
+PREF_CACHE_TIME_DEFAULT = CACHE_1MONTH
+
 TMDB_LANGUAGE_CODES = {
   'en': 'en',
-  'sv': 'sv',
-  'fr': 'fr-FR',
-  'es': 'es',
-  'nl': 'nl',
-  'de': 'de',
-  'it': 'it',
-  'da': 'da'
+  'ru': 'ru',
 }
 
+class LocalSettings():
+  """ These instance variables are populated from plugin preferences. """
+  # Current log level.
+  # Supported values are: 0 = none, 1 = error, 2 = warning, 3 = info, 4 = fine, 5 = finest.
+  logLevel = 1
+  isDebug = False
+
+localPrefs = LocalSettings()
+
+
 def Start():
-  HTTP.CacheTime = CACHE_1HOUR * 4
+  sendToInfoLog('***** START *****')
+  readPluginPreferences()
+
 
 def GetLanguageCode(lang):
   if TMDB_LANGUAGE_CODES.has_key(lang):
     return TMDB_LANGUAGE_CODES[lang]
   else:
-    return 'en'
+    return 'ru'
+
 
 @expose
 def GetImdbIdFromHash(openSubtitlesHash, lang):
   try:
-    tmdb_dict = JSON.ObjectFromURL(TMDB_GETINFO_HASH % (GetLanguageCode(lang), str(openSubtitlesHash)))[0]
+    url = TMDB_GETINFO_HASH % (GetLanguageCode(lang), str(openSubtitlesHash))
+    sendToFineLog('fetching URL: "%s"' % url)
+    tmdb_dict = JSON.ObjectFromURL(url)[0]
     if isinstance(tmdb_dict, dict) and tmdb_dict.has_key('imdb_id'):
+      sendToFineLog('got result')
       return MetadataSearchResult(
         id    = tmdb_dict['imdb_id'],
         name  = tmdb_dict['name'],
@@ -42,20 +63,26 @@ def GetImdbIdFromHash(openSubtitlesHash, lang):
         lang  = lang,
         score = 94)
     else:
+      sendToFineLog('found nothin\'')
       return None
 
   except:
+    sendToErrorLog(getExceptionInfo('Error fetching IMDB id for: "%s".' % str(openSubtitlesHash)))
     return None
 
-class TMDbAgent(Agent.Movies):
+class TMDbRuAgent(Agent.Movies):
   name = 'TheMovieDbRu'
-  languages = [Locale.Language.English, Locale.Language.Swedish, Locale.Language.French,
-               Locale.Language.Spanish, Locale.Language.Dutch, Locale.Language.German,
-               Locale.Language.Italian, Locale.Language.Danish]
-  primary_provider = False
-  contributes_to = ['com.plexapp.agents.imdb']
+  languages = [Locale.Language.Russian, Locale.Language.English]
+  primary_provider = True
 
   def search(self, results, media, lang):
+    sendToInfoLog('SEARCH START <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<')
+    mediaName = media.name
+    mediaYear = media.year
+    sendToInfoLog('searching for name="%s", year="%s", guid="%s", hash="%s", primary_metadata="%s", openSubtitlesHash="%s"...' %
+        (str(mediaName), str(mediaYear), str(media.guid), str(media.hash), str(media.primary_metadata), str(media.openSubtitlesHash)))
+    sendToFinestLog('quering TMDB...')
+
     if media.primary_metadata is not None:
       tmdb_id = self.get_tmdb_id(media.primary_metadata.id) # get the TMDb ID using the IMDB ID
       if tmdb_id:
@@ -63,7 +90,16 @@ class TMDbAgent(Agent.Movies):
     elif media.openSubtitlesHash is not None:
       match = GetImdbIdFromHash(media.openSubtitlesHash, lang)
 
+    if localPrefs.logLevel >= 3:
+      sendToInfoLog('search produced %d results:' % len(results))
+      index = 0
+      for result in results:
+        sendToInfoLog(' ... result %d: id="%s", name="%s", year="%s", score="%d".' % (index, result.id, result.name, str(result.year), result.score))
+        index += 1
+    sendToInfoLog('SEARCH END <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<')
+
   def update(self, metadata, media, lang): 
+    print '++++++++++++++++ UPDATE START'
     proxy = Proxy.Preview
     try:
       tmdb_info = HTTP.Request(TMDB_GETINFO_TMDB % (GetLanguageCode(lang), metadata.id)).content
@@ -82,11 +118,11 @@ class TMDbAgent(Agent.Movies):
       metadata.rating = rating
 
     # Title of the film.
-    if Prefs['title']:
-      metadata.title = tmdb_dict['name']
-    else:
-      metadata.title = ""
-
+    metadata.title = tmdb_dict['name']
+    
+    # Original Title of the film.
+    metadata.original_title = tmdb_dict['original_name']
+   
     # Tagline.
     metadata.tagline = tmdb_dict['tagline']
 
@@ -184,3 +220,85 @@ class TMDbAgent(Agent.Movies):
       return str(tmdb_dict['id'])
     else:
       return None
+
+def sendToFinestLog(msg):
+  if localPrefs.logLevel >= 5:
+    if localPrefs.isDebug:
+      print 'FINEST: ' + msg
+    else:
+      Log.Debug(msg)
+
+
+def sendToFineLog(msg):
+  if localPrefs.logLevel >= 4:
+    if localPrefs.isDebug:
+      print 'FINE: ' + msg
+    else:
+      Log.Info(msg)
+
+
+def sendToInfoLog(msg):
+  if localPrefs.logLevel >= 3:
+    if localPrefs.isDebug:
+      print 'INFO: ' + msg
+    else:
+      Log.Debug(msg)
+
+
+def sendToWarnLog(msg):
+  if localPrefs.logLevel >= 2:
+    if localPrefs.isDebug:
+      print 'WARN: ' + msg
+    else:
+      Log.WARN(msg)
+
+
+def sendToErrorLog(msg):
+  if localPrefs.logLevel >= 1:
+    if localPrefs.isDebug:
+      print 'ERROR: ' + msg
+    else:
+      Log.ERROR(msg)
+
+def readPluginPreferences():
+  prefLogLevel = Prefs[PREF_LOG_LEVEL_NAME]
+  if prefLogLevel == u'ничего':
+    localPrefs.logLevel = 0
+  elif prefLogLevel == u'предупреждения':
+    localPrefs.logLevel = 2
+  elif prefLogLevel == u'информативно':
+    localPrefs.logLevel = 3
+  elif prefLogLevel == u'подробно':
+    localPrefs.logLevel = 4
+  elif prefLogLevel == u'очень подробно':
+    localPrefs.logLevel = 5
+  else:
+    localPrefs.logLevel = 1 # Default is error.
+  localPrefs.isDebug = Prefs[PREF_IS_DEBUG_NAME]
+
+  # Setting cache expiration time.
+  prefCache = Prefs[PREF_CACHE_TIME_NAME]
+  if prefCache == u'1 минута':
+    cacheExp = CACHE_1MINUTE
+  elif prefCache == u'1 час':
+    cacheExp = CACHE_1HOUR
+  elif prefCache == u'1 день':
+    cacheExp = CACHE_1DAY
+  elif prefCache == u'1 неделя':
+    cacheExp = CACHE_1DAY
+  elif prefCache == u'1 месяц':
+    cacheExp = CACHE_1MONTH
+  elif prefCache == u'1 год':
+    cacheExp = CACHE_1MONTH * 12
+  else:
+    cacheExp = PREF_CACHE_TIME_DEFAULT
+  HTTP.CacheTime = cacheExp
+
+  sendToInfoLog('PREF: Setting debug to %s.' % str(localPrefs.isDebug))
+  sendToInfoLog('PREF: Setting log level to %d (%s).' % (localPrefs.logLevel, prefLogLevel))
+  sendToInfoLog('PREF: Setting cache expiration to %d seconds (%s).' % (cacheExp, prefCache))
+
+def getExceptionInfo(msg):
+  excInfo = sys.exc_info()
+  return '%s; exception: %s; cause: %s' % (msg, excInfo[0], excInfo[1])
+
