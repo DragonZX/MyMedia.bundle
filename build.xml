@@ -49,17 +49,17 @@
       <format property="current.time" pattern="hh:mm" />
     </tstamp>
     <mkdir dir="${build.dir}" />
-    <mkdir dir="${dist.dir}" />
+    <mkdir dir="${build.dist.dir}" />
   </target>
 
   <target name="-create-distro" depends="-init"
           description="Creates distribution files.">
     <echo message="Creating distribution files for the ${arg.plugin.name} plugin..." />
-    <property name="plugin.zip.filepath" value="${dist.dir}/${arg.base.filename}.zip" />
+    <property name="plugin.zip.filepath" value="${build.dist.dir}/${arg.base.filename}.zip" />
     <zip destfile="${plugin.zip.filepath}" update="true">
       <zipfileset dir="${arg.src.dir}" prefix="${arg.dir.name}" />
     </zip>
-    <property name="plugin.gz.filepath" value="${dist.dir}/${arg.base.filename}.tar.gz" />
+    <property name="plugin.gz.filepath" value="${build.dist.dir}/${arg.base.filename}.tar.gz" />
     <tar destfile="${plugin.gz.filepath}" compression="gzip">
       <zipfileset dir="${arg.src.dir}" prefix="${arg.dir.name}" />
     </tar>
