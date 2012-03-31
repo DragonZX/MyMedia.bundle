@@ -1,0 +1,28 @@
+[
+  {
+    "id": "tmdbru_pref_cache_time",
+    "label": "Кэширование веб-данных",
+    "type": "enum",
+    "values": ["1 минута", "1 час", "1 день", "1 неделя", "1 месяц", "1 год"],
+    "default": "1 месяц"
+  },
+  {
+    "id": "tmdbru_pref_log_level",
+    "label": "Уровень логирования",
+    "type": "enum",
+    "values": ["ничего", "ошибки", "предупреждения", "информативно", "подробно", "очень подробно"],
+    "default": "ошибки"
+  },
+  {
+	  "id": "tmdbru_pref_is_debug",
+		"label": "Дебаг режим",
+		"type": "bool",
+		"default":	"false"
+	},
+  {
+    "id": "title",
+    "label": "Use Movie Title from TheMovieDB",
+    "type": "bool",
+    "default": "false"
+  }
+]
