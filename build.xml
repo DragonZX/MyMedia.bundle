@@ -12,7 +12,7 @@
     </echo>
   </target>
 
-  <target name="dist" depends="wiki-dist, kinopoisk-dist, weewza-dist"
+  <target name="dist" depends="wiki-dist, kinopoisk-dist, weewza-dist, 1tvru-dist"
           description="Creates archive release files of all plugins.">
   </target>
 
@@ -43,6 +43,16 @@
       <param name="arg.base.filename" value="${weewza.plugin.dirName}-${weewza.plugin.version}" />
       <param name="arg.src.dir" value="${weewza.src.dir}" />
       <param name="arg.dir.name" value="${weewza.plugin.dirName}" />
+    </antcall>
+  </target>
+
+  <target name="1tvru-dist"
+          description="Creates an archive release file of 1TvRu plugin.">
+    <antcall target="-create-distro">
+      <param name="arg.plugin.name" value="${1tvru.project.name}" />
+      <param name="arg.base.filename" value="${1tvru.plugin.dirName}-${1tvru.plugin.version}" />
+      <param name="arg.src.dir" value="${1tvru.src.dir}" />
+      <param name="arg.dir.name" value="${1tvru.plugin.dirName}" />
     </antcall>
   </target>
 

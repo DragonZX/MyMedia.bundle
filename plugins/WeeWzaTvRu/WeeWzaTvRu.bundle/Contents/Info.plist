@@ -18,7 +18,7 @@
 	<string>1.0</string>
 	<key>PlexAgentAttributionText</key>
 	<string>
-	  Агент для просмотра телевизионных каналов через сайт
+    Плагин для бесплатного просмотра телевизионных каналов через сайт
     &lt;a href=&quot;http://www.weewza.com/&quot;&gt;WooWza.Com&lt;/a&gt;.
 	</string>
 	<key>PlexFrameworkVersion</key>
