@@ -1,3 +1,0 @@
-
-Notes for a guide on how to set up a media library:
-- file names (IMPORTANT!)
