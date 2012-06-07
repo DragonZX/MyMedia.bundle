@@ -291,6 +291,22 @@
     <option name="ALTERNATIVE_WORKING_PATH" value="" />
   </component>
   <component name="SvnBranchConfigurationManager">
+    <option name="myConfigurationMap">
+      <map>
+        <entry key="$PROJECT_DIR$">
+          <value>
+            <SvnBranchConfiguration>
+              <option name="branchUrls">
+                <list>
+                  <option value="https://russianplex.svn.sourceforge.net/svnroot/russianplex/tags" />
+                </list>
+              </option>
+              <option name="trunkUrl" value="https://russianplex.svn.sourceforge.net/svnroot/russianplex/trunk" />
+            </SvnBranchConfiguration>
+          </value>
+        </entry>
+      </map>
+    </option>
     <option name="mySupportsUserInfoFilter" value="true" />
   </component>
   <component name="SvnChangesBrowserSettings">
