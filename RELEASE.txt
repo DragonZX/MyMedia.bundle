@@ -1,7 +1,23 @@
-Release notes:
+Release process:
+===============================================================================
+ 1) make sure logging entries are removed in Info.plist config configuration files;
+ 2) run 'ant dist' (or an individual plugin dist target);
+ 3) upload file (-s) to sourceforge;
+ 4) update Plex wiki pages if necessary:
+   - http://wiki.plexapp.com/index.php/WikipediaRu
+   - http://wiki.plexapp.com/index.php/KinoPoiskRu
+   - http://wiki.plexapp.com/index.php/1TvRu
+   - http://wiki.plexapp.com/index.php/WeeWzaTvRu
+ 5) make a release announcement.
+
 
 KinoPoiskRu
 ===============================================================================
+
+CURRENT TARGET
+- Переход на использование логов Plex;
+- Упрощение конфигурации (удаление конфигурации логов);
+-
 
 KinoPoiskRu-1.0
 - Устранение ошибок выбора картинок (последствие изменений на сайте кинопоиска);
@@ -28,6 +44,11 @@ KinoPoiskRu-1.0rc1
 
 WikipediaRu
 ===============================================================================
+
+CURRENT TARGET
+- Переход на использование логов Plex;
+- Упрощение конфигурации (удаление конфигурации логов);
+-
 
 WikipediaRu-0.92
 - Добавление конфигурации логов;
