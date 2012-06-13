@@ -24,17 +24,19 @@ import string, sys, time
 USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_2) AppleWebKit/534.51.22 (KHTML, like Gecko) Version/5.1.1 Safari/534.51.22'
 ENCODING_PLEX = 'utf-8'
 
-PREF_CACHE_TIME_DEFAULT = CACHE_1MONTH
-
 SCORE_PENALTY_ITEM_ORDER = 1
 SCORE_PENALTY_YEAR_WRONG = 4
 SCORE_PENALTY_NO_MATCH = 50
 
+IMAGE_CHOICE_ALL = 1
+IMAGE_CHOICE_BEST = 2
+IMAGE_CHOICE_NOTHING = 3
+IMAGE_SCORE_BEST_THRESHOLD = 50
 IMAGE_SCORE_MAX_NUMBER_OF_ITEMS = 5
-IMAGE_SCORE_ITEM_ORDER_BONUS_MAX = 30
-IMAGE_SCORE_RESOLUTION_BONUS_MAX = 20
-IMAGE_SCORE_RATIO_BONUS_MAX = 40
-IMAGE_SCORE_THUMB_BONUS = 10
+IMAGE_SCORE_ITEM_ORDER_BONUS_MAX = 25
+IMAGE_SCORE_RESOLUTION_BONUS_MAX = 25
+IMAGE_SCORE_RATIO_BONUS_MAX = 45
+IMAGE_SCORE_THUMB_BONUS = 5
 POSTER_SCORE_MIN_RESOLUTION_PX = 60 * 1000
 POSTER_SCORE_MAX_RESOLUTION_PX = 600 * 1000
 POSTER_SCORE_BEST_RATIO = 0.7
@@ -54,25 +56,55 @@ class Thumbnail:
     self.index = index
     self.score = score
 
+  def __repr__(self):
+    return repr((self.thumbImgUrl, self.fullImgUrl, self.fullImgWidth, self.fullImgHeight, self.index, self.score))
+
+def ThumbnailCmp(one, two):
+  return one.score - two.score
+
 
 class Preferences:
   """ These instance variables are populated from plugin preferences.
   """
   def __init__(self,
-      (cacheTimeName, cacheTime),
-      (maxPostersName, maxPosters),
-      (maxArtName, maxArt),
-      (getAllActorsName, getAllActors)):
-    self.cacheTimeName = cacheTimeName
-    self.cacheTime = cacheTime
+      (imageChoiceName, imageChoiceDefault),
+      (maxPostersName, maxPostersDefault),
+      (maxArtName, maxArtDefault),
+      (getAllActorsName, getAllActorsDefault),
+      (cacheTimeName, cacheTimeDefault)):
+    self.imageChoiceName = imageChoiceName
+    self.imageChoice = imageChoiceDefault
+    self.imageChoiceDefault = imageChoiceDefault
     self.maxPostersName = maxPostersName
-    self.maxPosters = maxPosters
+    self.maxPosters = maxPostersDefault
     self.maxArtName = maxArtName
-    self.maxArt = maxArt
+    self.maxArt = maxArtDefault
     self.getAllActorsName = getAllActorsName
-    self.getAllActors = getAllActors
+    self.getAllActors = getAllActorsDefault
+    self.cacheTimeName = cacheTimeName
+    self.cacheTime = cacheTimeDefault
+    self.cacheTimeDefault = cacheTimeDefault
 
   def readPluginPreferences(self):
+    # Setting image (poster and funart) preferences.
+    imageChoice = Prefs[self.imageChoiceName]
+    if imageChoice == u'плохие не брать':
+      self.imageChoice = IMAGE_CHOICE_BEST
+    elif imageChoice == u'не брать никаких':
+      self.imageChoice = IMAGE_CHOICE_NOTHING
+    elif imageChoice == u'брать все':
+      self.imageChoice = IMAGE_CHOICE_ALL
+    else:
+      self.imageChoice = self.imageChoiceDefault
+    Log.Debug('PREF: Setting image preference to %d (%s).' % (self.imageChoice, imageChoice))
+
+    self.maxPosters = int(Prefs[self.maxPostersName])
+    Log.Debug('PREF: Max poster results is set to %d.' % self.maxPosters)
+    self.maxArt = int(Prefs[self.maxArtName])
+    Log.Debug('PREF: Max art results is set to %d.' % self.maxArt)
+    self.getAllActors = Prefs[self.getAllActorsName]
+    Log.Debug('PREF: Parse all actors is set to %s.' % str(self.getAllActors))
+
     # Setting cache expiration time.
     prefCache = Prefs[self.cacheTimeName]
     if prefCache == u'1 минута':
@@ -88,16 +120,9 @@ class Preferences:
     elif prefCache == u'1 год':
       self.cacheTime = CACHE_1MONTH * 12
     else:
-      self.cacheTime = PREF_CACHE_TIME_DEFAULT
+      self.cacheTime = self.cacheTimeDefault
     HTTP.CacheTime = self.cacheTime
     Log.Debug('PREF: Setting cache expiration to %d seconds (%s).' % (self.cacheTime, prefCache))
-
-    self.maxPosters = int(Prefs[self.maxPostersName])
-    Log.Debug('PREF: Max poster results is set to %d.' % self.maxPosters)
-    self.maxArt = int(Prefs[self.maxArtName])
-    Log.Debug('PREF: Max art results is set to %d.' % self.maxArt)
-    self.getAllActors = Prefs[self.getAllActorsName]
-    Log.Debug('PREF: Parse all actors is set to %s.' % str(self.getAllActors))
 
 
 def getElementFromHttpRequest(url, encoding):
@@ -128,7 +153,7 @@ def printSearchResults(results):
 
 
 def printImageSearchResults(thumbnailList):
-  Log.Debug('image search produced %d results:' % len(thumbnailList))
+  Log.Debug('printing %d image results:' % len(thumbnailList))
   index = 0
   for result in thumbnailList:
     Log.Debug(' ... result %d: index="%s", score="%s", URL="%s".' %
@@ -185,60 +210,62 @@ def scoreMediaTitleMatch(mediaName, mediaYear, title, year, itemIndex):
   return score
 
 
-def scoreThumbnailResults(thumbnailList, isPoster):
-  for thumb in thumbnailList:
-    Log.Debug('-------Scoring image %sx%s with index %d:\nfull image URL: "%s"\nthumb image URL: %s' %
+def scoreThumbnailResult(thumb, isPoster):
+  """ Given a Thumbnail object that represents an poster or a funart result,
+      scores it, and stores the score on the passed object (thumb.score).
+  """
+  Log.Debug('-------Scoring image %sx%s with index %d:\nfull image URL: "%s"\nthumb image URL: %s' %
                     (str(thumb.fullImgWidth), str(thumb.fullImgHeight), thumb.index, str(thumb.fullImgUrl), str(thumb.thumbImgUrl)))
-    score = 0
-    if thumb.fullImgUrl is None:
-      thumb.score = 0
-      continue
+  score = 0
+  if thumb.fullImgUrl is None:
+    thumb.score = 0
+    return
 
-    if thumb.index < IMAGE_SCORE_MAX_NUMBER_OF_ITEMS:
-      # Score bonus from index for items below 10 on the list.
-      bonus = IMAGE_SCORE_ITEM_ORDER_BONUS_MAX * \
-          ((IMAGE_SCORE_MAX_NUMBER_OF_ITEMS - thumb.index) / float(IMAGE_SCORE_MAX_NUMBER_OF_ITEMS))
-      Log.Debug('++++ adding order bonus: +%s' % str(bonus))
-      score += bonus
+  if thumb.index < IMAGE_SCORE_MAX_NUMBER_OF_ITEMS:
+    # Score bonus from index for items below 10 on the list.
+    bonus = IMAGE_SCORE_ITEM_ORDER_BONUS_MAX * \
+        ((IMAGE_SCORE_MAX_NUMBER_OF_ITEMS - thumb.index) / float(IMAGE_SCORE_MAX_NUMBER_OF_ITEMS))
+    Log.Debug('++++ adding order bonus: +%s' % str(bonus))
+    score += bonus
 
-    if thumb.fullImgWidth is not None and thumb.fullImgHeight is not None:
-      # Get a resolution bonus if width*height is more than a certain min value.
-      if isPoster:
-        minPx = POSTER_SCORE_MIN_RESOLUTION_PX
-        maxPx = POSTER_SCORE_MAX_RESOLUTION_PX
-        bestRatio = POSTER_SCORE_BEST_RATIO
-      else:
-        minPx = ART_SCORE_MIN_RESOLUTION_PX
-        maxPx = ART_SCORE_MAX_RESOLUTION_PX
-        bestRatio = ART_SCORE_BEST_RATIO
-      pixelsCount = thumb.fullImgWidth * thumb.fullImgHeight
-      if pixelsCount > minPx:
-        if pixelsCount > maxPx:
-          pixelsCount = maxPx
-        bonus = float(IMAGE_SCORE_RESOLUTION_BONUS_MAX) * \
-            float((pixelsCount - minPx)) / float((maxPx - minPx))
-        Log.Debug('++++ adding resolution bonus: +%s' % str(bonus))
-        score += bonus
-      else:
-        Log.Debug('++++ no resolution bonus for %dx%d' % (thumb.fullImgWidth, thumb.fullImgHeight))
-
-      # Get an orientation (Portrait vs Landscape) bonus. (we prefer images that are have portrait orientation.
-      ratio = thumb.fullImgWidth / float(thumb.fullImgHeight)
-      radioDiff = math.fabs(bestRatio - ratio)
-      if radioDiff < 0.5:
-        bonus = IMAGE_SCORE_RATIO_BONUS_MAX * (0.5 - radioDiff) * 2.0
-        Log.Debug('++++ adding "%s" ratio bonus: +%s' % (str(ratio), str(bonus)))
-        score += bonus
-      else:
-        # Ignoring Landscape ratios.
-        Log.Debug('++++ no ratio bonus for %dx%d' % (thumb.fullImgWidth, thumb.fullImgHeight))
+  if thumb.fullImgWidth is not None and thumb.fullImgHeight is not None:
+    # Get a resolution bonus if width*height is more than a certain min value.
+    if isPoster:
+      minPx = POSTER_SCORE_MIN_RESOLUTION_PX
+      maxPx = POSTER_SCORE_MAX_RESOLUTION_PX
+      bestRatio = POSTER_SCORE_BEST_RATIO
     else:
-      Log.Debug('++++ no size set - no resolution and no ratio bonus')
+      minPx = ART_SCORE_MIN_RESOLUTION_PX
+      maxPx = ART_SCORE_MAX_RESOLUTION_PX
+      bestRatio = ART_SCORE_BEST_RATIO
+    pixelsCount = thumb.fullImgWidth * thumb.fullImgHeight
+    if pixelsCount > minPx:
+      if pixelsCount > maxPx:
+        pixelsCount = maxPx
+      bonus = float(IMAGE_SCORE_RESOLUTION_BONUS_MAX) * \
+          float((pixelsCount - minPx)) / float((maxPx - minPx))
+      Log.Debug('++++ adding resolution bonus: +%s' % str(bonus))
+      score += bonus
+    else:
+      Log.Debug('++++ no resolution bonus for %dx%d' % (thumb.fullImgWidth, thumb.fullImgHeight))
 
-    # Get a bonus if image has a separate thumbnail URL.
-    if thumb.thumbImgUrl is not None and thumb.fullImgUrl != thumb.thumbImgUrl:
-      Log.Debug('++++ adding thumbnail bonus: +%d' % IMAGE_SCORE_THUMB_BONUS)
-      score += IMAGE_SCORE_THUMB_BONUS
+    # Get an orientation (Portrait vs Landscape) bonus. (we prefer images that are have portrait orientation.
+    ratio = thumb.fullImgWidth / float(thumb.fullImgHeight)
+    ratioDiff = math.fabs(bestRatio - ratio)
+    if ratioDiff < 0.5:
+      bonus = IMAGE_SCORE_RATIO_BONUS_MAX * (0.5 - ratioDiff) * 2.0
+      Log.Debug('++++ adding "%s" ratio bonus: +%s' % (str(ratio), str(bonus)))
+      score += bonus
+    else:
+      # Ignoring Landscape ratios.
+      Log.Debug('++++ no ratio bonus for %dx%d' % (thumb.fullImgWidth, thumb.fullImgHeight))
+  else:
+    Log.Debug('++++ no size set - no resolution and no ratio bonus')
 
-    Log.Debug('--------- SCORE: %d' % int(score))
-    thumb.score = int(score)
+  # Get a bonus if image has a separate thumbnail URL.
+  if thumb.thumbImgUrl is not None and thumb.fullImgUrl != thumb.thumbImgUrl:
+    Log.Debug('++++ adding thumbnail bonus: +%d' % IMAGE_SCORE_THUMB_BONUS)
+    score += IMAGE_SCORE_THUMB_BONUS
+
+  Log.Debug('--------- SCORE: %d' % int(score))
+  thumb.score = int(score)
