@@ -24,9 +24,9 @@ import string, sys, time
 USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_2) AppleWebKit/534.51.22 (KHTML, like Gecko) Version/5.1.1 Safari/534.51.22'
 ENCODING_PLEX = 'utf-8'
 
-SCORE_PENALTY_ITEM_ORDER = 1
-SCORE_PENALTY_YEAR_WRONG = 4
-SCORE_PENALTY_NO_MATCH = 50
+SCORE_PENALTY_ITEM_ORDER = 2
+SCORE_PENALTY_YEAR = 17
+SCORE_PENALTY_TITLE = 40
 
 IMAGE_CHOICE_ALL = 1
 IMAGE_CHOICE_BEST = 2
@@ -167,7 +167,7 @@ def logException(msg):
   Log.Exception('%s; exception: %s; cause: %s' % (msg, excInfo[0], excInfo[1]))
 
 
-def scoreMediaTitleMatch(mediaName, mediaYear, title, year, itemIndex):
+def scoreMediaTitleMatch(mediaName, mediaYear, title, altTitle, year, itemIndex):
   """ Compares page and media titles taking into consideration
       media item's year and title values. Returns score [0, 100].
       Search item scores 100 when:
@@ -178,31 +178,39 @@ def scoreMediaTitleMatch(mediaName, mediaYear, title, year, itemIndex):
       For now, our title scoring is pretty simple - we check if individual words
       from media item's title are found in the title from search results.
       We should also take into consideration order of words, so that "One Two" would not
-      have the same score as "Two One".
+      have the same score as "Two One". Also, taking into consideration year difference.
   """
-  Log.Debug('comparing "%s"-%s with "%s"-%s...' % (str(mediaName), str(mediaYear), str(title), str(year)))
+  Log.Debug('comparing "%s"-%s with "%s"-%s (%s)...' % (str(mediaName), str(mediaYear), str(title), str(year), str(altTitle)))
   # Max score is when both title and year match exactly.
   score = 100
 
   # Item order penalty (the lower it is on the list or results, the larger the penalty).
   score = score - (itemIndex * SCORE_PENALTY_ITEM_ORDER)
 
-  if str(mediaYear) != str(year):
-    score = score - SCORE_PENALTY_YEAR_WRONG
-  mediaName = mediaName.lower()
-  title = title.lower()
-  if mediaName != title:
-    # Look for title word matches.
-    words = mediaName.split()
-    wordMatches = 0
-    encodedTitle = title.encode(ENCODING_PLEX)
-    for word in words:
-      # FYI, using '\b' was troublesome (because of string encoding issues, I think).
-      matcher = re.compile('^(|.*[\W«])%s([\W»].*|)$' % word.encode(ENCODING_PLEX), re.UNICODE)
-      if matcher.search(encodedTitle) is not None:
-        wordMatches += 1
-    wordMatchesScore = float(wordMatches) / len(words)
-    score = score - ((float(1) - wordMatchesScore) * SCORE_PENALTY_NO_MATCH)
+  # Compute year penalty: [equal, diff>=3] --> [0, MAX].
+  yearPenalty = SCORE_PENALTY_YEAR
+  mediaYear = toInteger(mediaYear)
+  year = toInteger(year)
+  if mediaYear is not None and year is not None:
+    yearDiff = abs(mediaYear - year)
+    if not yearDiff:
+      yearPenalty = 0
+    elif yearDiff == 1:
+      yearPenalty = int(SCORE_PENALTY_YEAR / 3)
+    elif yearDiff == 2:
+      yearPenalty = int(SCORE_PENALTY_YEAR / 2)
+  else:
+    # If year is unknown, don't penalize the score too much.
+    yearPenalty = int(SCORE_PENALTY_YEAR / 3)
+  score = score - yearPenalty
+
+  # Compute title penalty.
+  titlePenalty = computeTitlePenalty(mediaName, title)
+  altTitlePenalty = 100
+  if altTitle is not None:
+    altTitlePenalty = computeTitlePenalty(mediaName, altTitle)
+  titlePenalty = min(titlePenalty, altTitlePenalty)
+  score = score - titlePenalty
 
   # IMPORTANT: always return an int.
   score = int(score)
@@ -269,3 +277,35 @@ def scoreThumbnailResult(thumb, isPoster):
 
   Log.Debug('--------- SCORE: %d' % int(score))
   thumb.score = int(score)
+
+
+def toInteger(maybeNumber):
+  """ Returns the argument converted to an integer if it represents a number
+      or None if the argument is None or does not represent a number.
+  """
+  try:
+    if maybeNumber is not None and str(maybeNumber).strip() != '':
+      return int(maybeNumber)
+  except:
+    pass
+  return None
+
+
+def computeTitlePenalty(mediaName, title):
+  """ Given media name and a candidate title, returns the title result score penalty.
+  """
+  mediaName = mediaName.lower()
+  title = title.lower()
+  if mediaName != title:
+    # Look for title word matches.
+    words = mediaName.split()
+    wordMatches = 0
+    encodedTitle = title.encode(ENCODING_PLEX)
+    for word in words:
+      # NOTE(zhenya): using '\b' was troublesome (because of string encoding issues, I think).
+      matcher = re.compile('^(|.*[\W«])%s([\W»].*|)$' % word.encode(ENCODING_PLEX), re.UNICODE)
+      if matcher.search(encodedTitle) is not None:
+        wordMatches += 1
+    wordMatchesScore = float(wordMatches) / len(words)
+    return int((float(1) - wordMatchesScore) * SCORE_PENALTY_TITLE)
+  return 0
