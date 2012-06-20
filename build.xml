@@ -5,6 +5,10 @@
   <property file="user.build.properties" />
   <property file="build.properties" />
 
+  <filterset id="commonFilterSet" begintoken="@" endtoken="@">
+    <filter token="PROJECT.NAME" value="${project.name}" />
+  </filterset>
+
   <target name="help"
           description="Prints useful information about the project builds.">
     <echo>
@@ -17,41 +21,49 @@
   </target>
 
   <target name="wiki-dist"
-          description="Creates an archive release file of WikipediaRu plugin.">
+          description="Creates an archive release file of WikipediaRu plugin."
+          depends="build">
     <antcall target="-create-distro">
       <param name="arg.plugin.name" value="${wikiru.project.name}" />
       <param name="arg.base.filename" value="${wikiru.plugin.dirName}-${wikiru.plugin.version}" />
       <param name="arg.src.dir" value="${wikiru.src.dir}" />
+      <param name="arg.plugin.version" value="${wikiru.plugin.version}" />
       <param name="arg.dir.name" value="${wikiru.plugin.dirName}" />
     </antcall>
   </target>
 
   <target name="kinopoisk-dist"
-          description="Creates an archive release file of KinoPoiskRu plugin.">
+          description="Creates an archive release file of KinoPoiskRu plugin."
+          depends="build">
     <antcall target="-create-distro">
       <param name="arg.plugin.name" value="${kinopoisk.project.name}" />
       <param name="arg.base.filename" value="${kinopoisk.plugin.dirName}-${kinopoisk.plugin.version}" />
       <param name="arg.src.dir" value="${kinopoisk.src.dir}" />
+      <param name="arg.plugin.version" value="${kinopoisk.plugin.version}" />
       <param name="arg.dir.name" value="${kinopoisk.plugin.dirName}" />
     </antcall>
   </target>
 
   <target name="weewza-dist"
-          description="Creates an archive release file of WeeWzaTvRu plugin.">
+          description="Creates an archive release file of WeeWzaTvRu plugin."
+          depends="build">
     <antcall target="-create-distro">
       <param name="arg.plugin.name" value="${weewza.project.name}" />
       <param name="arg.base.filename" value="${weewza.plugin.dirName}-${weewza.plugin.version}" />
       <param name="arg.src.dir" value="${weewza.src.dir}" />
+      <param name="arg.plugin.version" value="${weewza.plugin.version}" />
       <param name="arg.dir.name" value="${weewza.plugin.dirName}" />
     </antcall>
   </target>
 
   <target name="1tvru-dist"
-          description="Creates an archive release file of 1TvRu plugin.">
+          description="Creates an archive release file of 1TvRu plugin."
+          depends="build">
     <antcall target="-create-distro">
       <param name="arg.plugin.name" value="${1tvru.project.name}" />
       <param name="arg.base.filename" value="${1tvru.plugin.dirName}-${1tvru.plugin.version}" />
       <param name="arg.src.dir" value="${1tvru.src.dir}" />
+      <param name="arg.plugin.version" value="${1tvru.plugin.version}" />
       <param name="arg.dir.name" value="${1tvru.plugin.dirName}" />
     </antcall>
   </target>
@@ -62,6 +74,17 @@
     <delete dir="${build.dir}" failonerror="false" />
   </target>
 
+  <target name="build" description="Builds common files." depends="-init">
+    <copy todir="${build.common.dir}" filtering="true"
+          encoding="UTF-8" outputencoding="UTF-8" overwrite="true">
+      <filterset refid="commonFilterSet" />
+      <filterset>
+        <filter token="REPOSITORY.REVISION" value="${repo.revision.number}" />
+      </filterset>
+      <fileset dir="${common.scr.dir}" />
+    </copy>
+  </target>
+
   <target name="-init"
           description="Initializes necessary properties and creates directories for project build.">
     <tstamp>
@@ -70,22 +93,55 @@
     </tstamp>
     <mkdir dir="${build.dir}" />
     <mkdir dir="${build.dist.dir}" />
+
+    <!-- Export revision number into a property. -->
+    <property name="getrevision.script" value="${script.get.revision.path}" />
+    <chmod perm="755" type="file">
+      <fileset file="${getrevision.script}" />
+    </chmod>
+    <exec executable="${getrevision.script}" dir="." failonerror="false"
+          outputproperty="repo.revision.number">
+    </exec>
   </target>
 
   <target name="-create-distro" depends="-init"
-          description="Creates distribution files.">
+          description="Creates distribution files for a given plugin.">
     <echo message="Creating distribution files for the ${arg.plugin.name} plugin..." />
+
+    <!-- Copy files to the assembly directory. -->
+    <property name="plugin.src.dir" value="${build.assembly.dir}/${arg.dir.name}" />
+    <copy todir="${plugin.src.dir}" filtering="true"
+          encoding="UTF-8" outputencoding="UTF-8" overwrite="true">
+      <filterset refid="commonFilterSet" />
+      <filterset>
+        <filter token="REPOSITORY.REVISION" value="${repo.revision.number}" />
+        <filter token="PLUGIN.REVISION" value="${arg.plugin.version}" />
+      </filterset>
+      <fileset dir="${arg.src.dir}">
+        <include name="**/*.py" />
+      </fileset>
+    </copy>
+    <copy todir="${plugin.src.dir}" filtering="false">
+      <fileset dir="${arg.src.dir}">
+        <exclude name="**/*.py" />
+      </fileset>
+    </copy>
+    <copy todir="${plugin.src.dir}/Contents/Code" filtering="false">
+      <fileset dir="${build.common.dir}" />
+    </copy>
+
+    <!-- Create the archive files. -->
     <property name="plugin.zip.filepath" value="${build.dist.dir}/${arg.base.filename}.zip" />
     <zip destfile="${plugin.zip.filepath}" update="true">
-      <zipfileset dir="${arg.src.dir}" prefix="${arg.dir.name}" />
+      <zipfileset dir="${plugin.src.dir}" prefix="${arg.dir.name}" />
     </zip>
     <property name="plugin.gz.filepath" value="${build.dist.dir}/${arg.base.filename}.tar.gz" />
     <tar destfile="${plugin.gz.filepath}" compression="gzip">
-      <zipfileset dir="${arg.src.dir}" prefix="${arg.dir.name}" />
+      <zipfileset dir="${plugin.src.dir}" prefix="${arg.dir.name}" />
     </tar>
     <echo />
-    <echo message="zip    -> ${plugin.gz.filepath}." />
-    <echo message="tar.gz -> ${plugin.zip.filepath}." />
+    <echo message="zip    -> ${plugin.zip.filepath}." />
+    <echo message="tar.gz -> ${plugin.gz.filepath}." />
   </target>
 
 </project>

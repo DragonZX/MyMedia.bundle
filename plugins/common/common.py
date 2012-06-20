@@ -1,23 +1,26 @@
 # -*- coding: utf-8 -*-
-
+#
 # Russian metadata plugin for Plex, which uses http://www.kinopoisk.ru/ to get the tag data.
 # Плагин для обновления информации о фильмах использующий КиноПоиск (http://www.kinopoisk.ru/).
 # Copyright (C) 2012 Zhenya Nyden
-
+#
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version.
-
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-
+#
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA.
+#
+# @author zhenya (Yevgeny Nyden)
+# @revision @REPOSITORY.REVISION@
 
 import string, sys, time
 
@@ -156,7 +159,7 @@ def printImageSearchResults(thumbnailList):
   Log.Debug('printing %d image results:' % len(thumbnailList))
   index = 0
   for result in thumbnailList:
-    Log.Debug(' ... result %d: index="%s", score="%s", URL="%s".' %
+    Log.Debug(' ... %d: index=%s, score=%s, URL="%s".' %
               (index, result.index, result.score, result.fullImgUrl))
     index += 1
   return None
@@ -309,3 +312,37 @@ def computeTitlePenalty(mediaName, title):
     wordMatchesScore = float(wordMatches) / len(words)
     return int((float(1) - wordMatchesScore) * SCORE_PENALTY_TITLE)
   return 0
+
+
+def getXpathOptionalNode(elem, xpath):
+  """ Evaluates a given xpath expression against a given node and
+      returns the first result or None if there are no results.
+  """
+  valueElems = elem.xpath(xpath)
+  if len(valueElems) > 0:
+    return valueElems[0]
+  return None
+
+
+def getXpathRequiredNode(elem, xpath):
+  """ Evaluates a given xpath expression against a given node and
+      returns the first result. Throws an exception if there are no results.
+  """
+  value = getXpathOptionalNode(elem, xpath)
+  if value is None:
+    raise Exception('Unable to evaluate xpath "%s"' % str(xpath))
+  return value
+
+
+def getReOptionalGroup(matcher, str, groupInd):
+  """ Evaluates a passed matcher against a given string and returns a group
+      from the result with a given index. None is returned if there is no match
+      or when the passed string argument is None.
+  """
+  if str is not None:
+    match = matcher.search(str)
+    if match is not None:
+      groups = match.groups()
+      if len(groups) > groupInd:
+        return groups[groupInd]
+  return None
