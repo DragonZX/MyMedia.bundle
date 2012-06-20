@@ -14,6 +14,8 @@ TMDB_GETINFO_IMDB = 'http://api.themoviedb.org/2.1/Movie.imdbLookup/en/json/a3dc
 TMDB_GETINFO_TMDB = 'http://api.themoviedb.org/2.1/Movie.getInfo/%s/json/a3dc111e66105f6387e99393813ae4d5/%s'
 TMDB_GETINFO_HASH = 'http://api.themoviedb.org/2.1/Hash.getInfo/%s/json/a3dc111e66105f6387e99393813ae4d5/%s'
 
+???
+http://www.imdbapi.com/?i=&t=приключения+буратино
 
 # Preference item names.
 PREF_IS_DEBUG_NAME = 'tmdbru_pref_is_debug'
