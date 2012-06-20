@@ -1,3 +1,13 @@
+1) add a setting to disable parsing images
+2) use Manual==True to force data update
+3) refactor common code
+4) add imdb id fetcher and pass it down
+5) add English locale
+6) add build rules and deployment checks
+7) unit tests?
+8) destination web-UI structure check in a cron job?
+9) auto-update plugin feature
+
 * (zhenya) Add author and licence tags
 * (zhenya) возможность использовать английские названия фильмов
 * (zhenya) транслитератор file names

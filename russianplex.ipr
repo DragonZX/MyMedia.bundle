@@ -95,6 +95,18 @@
     <option name="CUSTOM_SCOPE_NAME" value="" />
     <profile name="Default" />
   </component>
+  <component name="InspectionProjectProfileManager">
+    <profiles>
+      <profile version="1.0" is_locked="false">
+        <option name="myName" value="Project Default" />
+        <option name="myLocal" value="false" />
+        <inspection_tool class="PyBroadExceptionInspection" enabled="false" level="WARNING" enabled_by_default="false" />
+      </profile>
+    </profiles>
+    <option name="PROJECT_PROFILE" value="Project Default" />
+    <option name="USE_PROJECT_PROFILE" value="true" />
+    <version value="1.0" />
+  </component>
   <component name="J2EEProjectPane">
     <setting name="SHOW_AS_DEPLOYMENT_VIEW" value="false" />
   </component>
