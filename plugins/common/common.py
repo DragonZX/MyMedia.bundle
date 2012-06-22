@@ -22,7 +22,7 @@
 # @author zhenya (Yevgeny Nyden)
 # @revision @REPOSITORY.REVISION@
 
-import string, sys, time
+import string, sys, time, re
 
 USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_2) AppleWebKit/534.51.22 (KHTML, like Gecko) Version/5.1.1 Safari/534.51.22'
 ENCODING_PLEX = 'utf-8'
@@ -90,42 +90,47 @@ class Preferences:
 
   def readPluginPreferences(self):
     # Setting image (poster and funart) preferences.
-    imageChoice = Prefs[self.imageChoiceName]
-    if imageChoice == u'плохие не брать':
-      self.imageChoice = IMAGE_CHOICE_BEST
-    elif imageChoice == u'не брать никаких':
-      self.imageChoice = IMAGE_CHOICE_NOTHING
-    elif imageChoice == u'брать все':
-      self.imageChoice = IMAGE_CHOICE_ALL
-    else:
-      self.imageChoice = self.imageChoiceDefault
-    Log.Debug('PREF: Setting image preference to %d (%s).' % (self.imageChoice, imageChoice))
+    if self.imageChoiceName is not None:
+      imageChoice = Prefs[self.imageChoiceName]
+      if imageChoice == u'плохие не брать':
+        self.imageChoice = IMAGE_CHOICE_BEST
+      elif imageChoice == u'не брать никаких':
+        self.imageChoice = IMAGE_CHOICE_NOTHING
+      elif imageChoice == u'брать все':
+        self.imageChoice = IMAGE_CHOICE_ALL
+      else:
+        self.imageChoice = self.imageChoiceDefault
+      Log.Debug('PREF: Setting image preference to %d (%s).' % (self.imageChoice, imageChoice))
 
-    self.maxPosters = int(Prefs[self.maxPostersName])
-    Log.Debug('PREF: Max poster results is set to %d.' % self.maxPosters)
-    self.maxArt = int(Prefs[self.maxArtName])
-    Log.Debug('PREF: Max art results is set to %d.' % self.maxArt)
-    self.getAllActors = Prefs[self.getAllActorsName]
-    Log.Debug('PREF: Parse all actors is set to %s.' % str(self.getAllActors))
+    if self.maxPostersName is not None:
+      self.maxPosters = int(Prefs[self.maxPostersName])
+      Log.Debug('PREF: Max poster results is set to %d.' % self.maxPosters)
+    if self.maxArtName is not None:
+      self.maxArt = int(Prefs[self.maxArtName])
+      Log.Debug('PREF: Max art results is set to %d.' % self.maxArt)
+    if self.getAllActorsName is not None:
+      self.getAllActors = Prefs[self.getAllActorsName]
+      Log.Debug('PREF: Parse all actors is set to %s.' % str(self.getAllActors))
 
     # Setting cache expiration time.
-    prefCache = Prefs[self.cacheTimeName]
-    if prefCache == u'1 минута':
-      self.cacheTime = CACHE_1MINUTE
-    elif prefCache == u'1 час':
-      self.cacheTime = CACHE_1HOUR
-    elif prefCache == u'1 день':
-      self.cacheTime = CACHE_1DAY
-    elif prefCache == u'1 неделя':
-      self.cacheTime = CACHE_1DAY
-    elif prefCache == u'1 месяц':
-      self.cacheTime = CACHE_1MONTH
-    elif prefCache == u'1 год':
-      self.cacheTime = CACHE_1MONTH * 12
-    else:
-      self.cacheTime = self.cacheTimeDefault
-    HTTP.CacheTime = self.cacheTime
-    Log.Debug('PREF: Setting cache expiration to %d seconds (%s).' % (self.cacheTime, prefCache))
+    if self.cacheTimeName is not None:
+      prefCache = Prefs[self.cacheTimeName]
+      if prefCache == u'1 минута':
+        self.cacheTime = CACHE_1MINUTE
+      elif prefCache == u'1 час':
+        self.cacheTime = CACHE_1HOUR
+      elif prefCache == u'1 день':
+        self.cacheTime = CACHE_1DAY
+      elif prefCache == u'1 неделя':
+        self.cacheTime = CACHE_1DAY
+      elif prefCache == u'1 месяц':
+        self.cacheTime = CACHE_1MONTH
+      elif prefCache == u'1 год':
+        self.cacheTime = CACHE_1MONTH * 12
+      else:
+        self.cacheTime = self.cacheTimeDefault
+      HTTP.CacheTime = self.cacheTime
+      Log.Debug('PREF: Setting cache expiration to %d seconds (%s).' % (self.cacheTime, prefCache))
 
 
 def getElementFromHttpRequest(url, encoding):
