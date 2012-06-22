@@ -68,6 +68,18 @@
     </antcall>
   </target>
 
+  <target name="tmdbru-dist"
+          description="Creates an archive release file of TheMovieDbRu plugin."
+          depends="build">
+    <antcall target="-create-distro">
+      <param name="arg.plugin.name" value="${tmdbru.project.name}" />
+      <param name="arg.base.filename" value="${tmdbru.plugin.dirName}-${tmdbru.plugin.version}" />
+      <param name="arg.src.dir" value="${tmdbru.src.dir}" />
+      <param name="arg.plugin.version" value="${tmdbru.plugin.version}" />
+      <param name="arg.dir.name" value="${tmdbru.plugin.dirName}" />
+    </antcall>
+  </target>
+
   <target name="clean"
           description="Cleans up the build directory.">
     <echo message="Cleaning up local build directory ${build.dir}." />
@@ -126,7 +138,8 @@
         <exclude name="**/*.py" />
       </fileset>
     </copy>
-    <copy todir="${plugin.src.dir}/Contents/Code" filtering="false">
+    <!-- Copy common files. -->
+    <copy todir="${plugin.src.dir}/${src.path}" filtering="true">
       <fileset dir="${build.common.dir}" />
     </copy>
 
@@ -139,7 +152,6 @@
     <tar destfile="${plugin.gz.filepath}" compression="gzip">
       <zipfileset dir="${plugin.src.dir}" prefix="${arg.dir.name}" />
     </tar>
-    <echo />
     <echo message="zip    -> ${plugin.zip.filepath}." />
     <echo message="tar.gz -> ${plugin.gz.filepath}." />
   </target>
