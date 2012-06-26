@@ -29,25 +29,18 @@ IS_DEBUG = False # TODO - DON'T FORGET TO SET IT TO FALSE FOR A DISTRO.
 
 # Default plugin preferences. When modifying, please also change
 # corresponding values in the ../DefaultPrefs.json file.
+TMDBRU_PREF_DEFAULT_CACHE_TIME_NAME = 'tmdbru_pref_cache_time'
 TMDBRU_PREF_DEFAULT_CACHE_TIME = CACHE_1MONTH
-
-# Plugin preferences.
-PREFS = common.Preferences(
-  (None, None), # imageChoiceName
-  (None, None), # maxPostersName
-  (None, None), # maxArtName
-  (None, None), # getAllActorsName
-  ('tmdbru_pref_cache_time', TMDBRU_PREF_DEFAULT_CACHE_TIME))
 
 
 def Start():
   Log.Info('***** START ***** %s' % common.USER_AGENT)
-  PREFS.readPluginPreferences()
+  common.parseAndSetCacheTimeFromPrefs(TMDBRU_PREF_DEFAULT_CACHE_TIME_NAME, TMDBRU_PREF_DEFAULT_CACHE_TIME)
 
 
 def ValidatePrefs():
   Log.Info('***** updating preferences...')
-  PREFS.readPluginPreferences()
+  common.parseAndSetCacheTimeFromPrefs(TMDBRU_PREF_DEFAULT_CACHE_TIME_NAME, TMDBRU_PREF_DEFAULT_CACHE_TIME)
 
 
 class TheMovieDbRuAgent(Agent.Movies):
@@ -64,7 +57,9 @@ class TheMovieDbRuAgent(Agent.Movies):
     mediaYear = media.year
     Log.Debug('searching for name="%s", year="%s", guid="%s", hash="%s", primary_metadata="%s", openSubtitlesHash="%s"...' %
         (str(mediaName), str(mediaYear), str(media.guid), str(media.hash), str(media.primary_metadata), str(media.openSubtitlesHash)))
-    tmdb.searchForImdbTitles(results, mediaName, mediaYear, lang)
+    matches = tmdb.searchForImdbTitles(mediaName, mediaYear, lang)
+    for match in matches:
+      results.Append(MetadataSearchResult(id=match['id'], name=match['title'], year=match['year'], lang=lang, score=match['score']))
 
     if IS_DEBUG:
       common.printSearchResults(results)

@@ -74,16 +74,18 @@ class Preferences:
       (maxPostersName, maxPostersDefault),
       (maxArtName, maxArtDefault),
       (getAllActorsName, getAllActorsDefault),
+      (imdbSupportName, imdbSupportDefault),
       (cacheTimeName, cacheTimeDefault)):
     self.imageChoiceName = imageChoiceName
     self.imageChoice = imageChoiceDefault
-    self.imageChoiceDefault = imageChoiceDefault
     self.maxPostersName = maxPostersName
     self.maxPosters = maxPostersDefault
     self.maxArtName = maxArtName
     self.maxArt = maxArtDefault
     self.getAllActorsName = getAllActorsName
     self.getAllActors = getAllActorsDefault
+    self.imdbSupportName = imdbSupportName
+    self.imdbSupport = imdbSupportDefault
     self.cacheTimeName = cacheTimeName
     self.cacheTime = cacheTimeDefault
     self.cacheTimeDefault = cacheTimeDefault
@@ -98,8 +100,6 @@ class Preferences:
         self.imageChoice = IMAGE_CHOICE_NOTHING
       elif imageChoice == u'брать все':
         self.imageChoice = IMAGE_CHOICE_ALL
-      else:
-        self.imageChoice = self.imageChoiceDefault
       Log.Debug('PREF: Setting image preference to %d (%s).' % (self.imageChoice, imageChoice))
 
     if self.maxPostersName is not None:
@@ -112,25 +112,37 @@ class Preferences:
       self.getAllActors = Prefs[self.getAllActorsName]
       Log.Debug('PREF: Parse all actors is set to %s.' % str(self.getAllActors))
 
+    # Setting IMDB support.
+    if self.imdbSupportName is not None:
+      self.imdbSupport = Prefs[self.imdbSupportName]
+      Log.Debug('PREF: IMDB support is set to %s.' % str(self.imdbSupport))
+
     # Setting cache expiration time.
     if self.cacheTimeName is not None:
-      prefCache = Prefs[self.cacheTimeName]
-      if prefCache == u'1 минута':
-        self.cacheTime = CACHE_1MINUTE
-      elif prefCache == u'1 час':
-        self.cacheTime = CACHE_1HOUR
-      elif prefCache == u'1 день':
-        self.cacheTime = CACHE_1DAY
-      elif prefCache == u'1 неделя':
-        self.cacheTime = CACHE_1DAY
-      elif prefCache == u'1 месяц':
-        self.cacheTime = CACHE_1MONTH
-      elif prefCache == u'1 год':
-        self.cacheTime = CACHE_1MONTH * 12
-      else:
-        self.cacheTime = self.cacheTimeDefault
-      HTTP.CacheTime = self.cacheTime
-      Log.Debug('PREF: Setting cache expiration to %d seconds (%s).' % (self.cacheTime, prefCache))
+      self.cacheTime = parseAndSetCacheTimeFromPrefs(self.cacheTimeName, self.cacheTimeDefault)
+
+
+def parseAndSetCacheTimeFromPrefs(cacheTimeName, cacheTimeDefault):
+  """ Reads cache time preferences and returns it's value as an int.
+  """
+  prefCache = Prefs[cacheTimeName]
+  if prefCache == u'1 минута':
+    cacheTime = CACHE_1MINUTE
+  elif prefCache == u'1 час':
+    cacheTime = CACHE_1HOUR
+  elif prefCache == u'1 день':
+    cacheTime = CACHE_1DAY
+  elif prefCache == u'1 неделя':
+    cacheTime = CACHE_1DAY
+  elif prefCache == u'1 месяц':
+    cacheTime = CACHE_1MONTH
+  elif prefCache == u'1 год':
+    cacheTime = CACHE_1MONTH * 12
+  else:
+    cacheTime = cacheTimeDefault
+  HTTP.CacheTime = cacheTime
+  Log.Debug('PREF: Setting cache expiration to %d seconds (%s).' % (cacheTime, prefCache))
+  return cacheTime
 
 
 def getElementFromHttpRequest(url, encoding):

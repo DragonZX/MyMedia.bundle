@@ -34,11 +34,12 @@ TMDB_PAGE_ENCODING = 'utf-8'
 MATCHER_RELEASED = re.compile(r'\D?(\d\d\d\d)\D')
 
 
-def searchForImdbTitles(results, mediaName, mediaYear, lang):
+def searchForImdbTitles(mediaName, mediaYear, lang):
   """ Given media name and a candidate title, returns the title result score penalty.
   """
   mediaName = mediaName.lower()
   page = common.getElementFromHttpRequest(TMDB_GETINFO % mediaName.replace(' ', '%20'), TMDB_PAGE_ENCODING)
+  matches = []
   if page is None:
     Log.Warn('nothing was found on tmdb for media name "%s"' % mediaName)
   else:
@@ -51,6 +52,16 @@ def searchForImdbTitles(results, mediaName, mediaYear, lang):
       releaseDate = common.getXpathOptionalNode(movieElem, './released/text()')
       year = common.getReOptionalGroup(MATCHER_RELEASED, releaseDate, 0)
       score = common.scoreMediaTitleMatch(mediaName, mediaYear, title, altTitle, year, itemIndex)
-      results.Append(MetadataSearchResult(id=imdbId, name=title, year=year, lang=lang, score=score))
+      matches.append({'id': imdbId, 'name': title, 'year': year, 'score': score})
       itemIndex += 1
+  return matches
 
+
+def findBestTitleMatch(mediaName, mediaYear, lang):
+  matches = searchForImdbTitles(mediaName, mediaYear, lang)
+  if len(matches) > 0:
+    orderedMatches = sorted(matches, key=lambda item: item['score'])
+    orderedMatches.reverse()
+    return orderedMatches[0]['id']
+  else:
+    return None
