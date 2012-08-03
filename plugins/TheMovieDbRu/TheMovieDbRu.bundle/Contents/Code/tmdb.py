@@ -60,8 +60,7 @@ def searchForImdbTitles(mediaName, mediaYear, lang):
 def findBestTitleMatch(mediaName, mediaYear, lang):
   matches = searchForImdbTitles(mediaName, mediaYear, lang)
   if len(matches) > 0:
-    orderedMatches = sorted(matches, key=lambda item: item['score'])
-    orderedMatches.reverse()
+    orderedMatches = sorted(matches, key=lambda item: item['score'], reverse=True)
     return orderedMatches[0]['id']
   else:
     return None

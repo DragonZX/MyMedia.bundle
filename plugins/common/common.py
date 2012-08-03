@@ -34,6 +34,7 @@ SCORE_PENALTY_TITLE = 40
 IMAGE_CHOICE_ALL = 1
 IMAGE_CHOICE_BEST = 2
 IMAGE_CHOICE_NOTHING = 3
+IMAGE_CHOICE_THUMB_ONLY = 4
 IMAGE_SCORE_BEST_THRESHOLD = 50
 IMAGE_SCORE_MAX_NUMBER_OF_ITEMS = 5
 IMAGE_SCORE_ITEM_ORDER_BONUS_MAX = 25
@@ -100,6 +101,8 @@ class Preferences:
         self.imageChoice = IMAGE_CHOICE_NOTHING
       elif imageChoice == u'брать все':
         self.imageChoice = IMAGE_CHOICE_ALL
+      elif imageChoice == u'только ярлык':
+        self.imageChoice = IMAGE_CHOICE_THUMB_ONLY
       Log.Debug('PREF: Setting image preference to %d (%s).' % (self.imageChoice, imageChoice))
 
     if self.maxPostersName is not None:
