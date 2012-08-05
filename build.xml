@@ -36,7 +36,8 @@
           description="Creates an archive release file of KinoPoiskRu plugin."
           depends="build">
     <!-- Copy tmdb src file. -->
-    <copy todir="${kinopoisk.src.dir}/${src.path}" file="${tmdbru.src.file}" filtering="true" />
+    <property name="plugin.code.dir" value="${build.assembly.dir}/${kinopoisk.plugin.dirName}/${src.path}" />
+    <copy todir="${plugin.code.dir}" file="${tmdbru.src.file}" filtering="true" />
     <antcall target="-create-distro">
       <param name="arg.plugin.name" value="${kinopoisk.project.name}" />
       <param name="arg.base.filename" value="${kinopoisk.plugin.dirName}-${kinopoisk.plugin.version}" />
