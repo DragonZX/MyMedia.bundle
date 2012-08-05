@@ -129,11 +129,7 @@ def parseAndSetCacheTimeFromPrefs(cacheTimeName, cacheTimeDefault):
   """ Reads cache time preferences and returns it's value as an int.
   """
   prefCache = Prefs[cacheTimeName]
-  if prefCache == u'1 минута':
-    cacheTime = CACHE_1MINUTE
-  elif prefCache == u'1 час':
-    cacheTime = CACHE_1HOUR
-  elif prefCache == u'1 день':
+  if prefCache == u'1 день':
     cacheTime = CACHE_1DAY
   elif prefCache == u'1 неделя':
     cacheTime = CACHE_1DAY
