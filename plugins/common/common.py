@@ -351,6 +351,19 @@ def getXpathOptionalNode(elem, xpath):
   return None
 
 
+def getXpathOptionalNodeStrings(elem, xpath):
+  """ Evaluates a given xpath expression against a given node and
+      returns non-empty strings from all results as an array.
+  """
+  textValues = elem.xpath(xpath)
+  values = []
+  for textValue in textValues:
+    value = textValue.strip().strip(',')
+    if len(value) > 0:
+      values.append(value)
+  return values
+
+
 def getXpathRequiredNode(elem, xpath):
   """ Evaluates a given xpath expression against a given node and
       returns the first result. Throws an exception if there are no results.
