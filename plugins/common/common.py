@@ -148,15 +148,26 @@ def getElementFromHttpRequest(url, encoding):
   """ Fetches a given URL and returns it as an element.
       Функция преобразования html-кода в xml-код.
   """
-#  Log.Debug('Requesting URL: "%s"...' % url)
   for i in range(3):
+    errorCount = 0
     try:
-#      time.sleep(1)
       response = HTTP.Request(url, headers = {'User-agent': USER_AGENT, 'Accept': 'text/html'})
       return HTML.ElementFromString(str(response).decode(encoding))
     except:
+      errorCount += 1
       Log.Debug('Error fetching URL: "%s".' % url)
-      time.sleep(1)
+      time.sleep(1 + errorCount)
+  return None
+
+
+def getResponseFromHttpRequest(url):
+  """ Requests an image given its URL and returns a request object.
+  """
+  try:
+    response = HTTP.Request(url, headers = {'User-agent': USER_AGENT, 'Accept': 'image/jpeg'})
+    return response
+  except:
+    Log.Debug('Error fetching URL: "%s".' % url)
   return None
 
 
