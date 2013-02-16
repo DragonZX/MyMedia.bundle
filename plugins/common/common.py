@@ -362,7 +362,7 @@ def getXpathOptionalNode(elem, xpath):
   """
   valueElems = elem.xpath(xpath)
   if len(valueElems) > 0:
-    return valueElems[0]
+    return valueElems[0].strip()
   return None
 
 
