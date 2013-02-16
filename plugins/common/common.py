@@ -76,7 +76,9 @@ class Preferences:
       (maxArtName, maxArtDefault),
       (getAllActorsName, getAllActorsDefault),
       (imdbSupportName, imdbSupportDefault),
-      (cacheTimeName, cacheTimeDefault)):
+      (cacheTimeName, cacheTimeDefault),
+      (imdbRatingName, imdbRatingDefault),
+      (additionalRatingName, additionalRatingDefault)):
     self.imageChoiceName = imageChoiceName
     self.imageChoice = imageChoiceDefault
     self.maxPostersName = maxPostersName
@@ -90,6 +92,10 @@ class Preferences:
     self.cacheTimeName = cacheTimeName
     self.cacheTime = cacheTimeDefault
     self.cacheTimeDefault = cacheTimeDefault
+    self.imdbRatingName = imdbRatingName
+    self.imdbRating = imdbRatingDefault
+    self.additionalRatingName = additionalRatingName
+    self.additionalRating = additionalRatingDefault
 
   def readPluginPreferences(self):
     # Setting image (poster and funart) preferences.
@@ -124,6 +130,15 @@ class Preferences:
     if self.cacheTimeName is not None:
       self.cacheTime = parseAndSetCacheTimeFromPrefs(self.cacheTimeName, self.cacheTimeDefault)
 
+    # Setting IMDB rating.
+    if self.imdbRatingName is not None:
+      self.imdbRating = Prefs[self.imdbRatingName]
+    Log.Debug('PREF: IMDB rating is set to %s.' % str(self.imdbRating))
+
+    # Setting kinopoisk.ru rating.
+    if self.additionalRatingName is not None:
+      self.additionalRating = Prefs[self.additionalRatingName]
+    Log.Debug('PREF: kinopoisk rating is set to %s.' % str(self.additionalRating))
 
 def parseAndSetCacheTimeFromPrefs(cacheTimeName, cacheTimeDefault):
   """ Reads cache time preferences and returns it's value as an int.
