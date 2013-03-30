@@ -32,6 +32,20 @@
     </antcall>
   </target>
 
+  <target name="kinopoisk-test"
+          description="Runs unit tests for KinoPoiskRu plugin."
+          depends="kinopoisk-dist,build-test">
+    <property name="plugin.code.dir" value="${build.assembly.dir}/${kinopoisk.plugin.dirName}/${src.path}" />
+    <copy todir="${kinopoisk.build.test.dir}" filtering="true" >
+      <fileset dir="${plugin.code.dir}">
+        <exclude name="__init__.py" />
+      </fileset>
+    </copy>
+    <exec dir="${kinopoisk.build.test.dir}" executable="python" failonerror="true">
+      <arg line="main.py" />
+    </exec>
+  </target>
+
   <target name="kinopoisk-dist"
           description="Creates an archive release file of KinoPoiskRu plugin."
           depends="build">
@@ -89,7 +103,26 @@
     <delete dir="${build.dir}" failonerror="false" />
   </target>
 
-  <target name="build" description="Builds common files." depends="-init">
+  <target name="build-test" description="Builds test files." depends="build">
+    <copy todir="${build.test.dir}" filtering="true"
+          encoding="UTF-8" outputencoding="UTF-8" overwrite="true">
+      <filterset refid="commonFilterSet" />
+      <filterset>
+        <filter token="REPOSITORY.REVISION" value="${repo.revision.number}" />
+      </filterset>
+      <fileset dir="${test.scr.dir}">
+        <exclude name="**/*.html" />
+      </fileset>
+    </copy>
+    <copy todir="${build.test.dir}" filtering="false"
+          encoding="cp1251" outputencoding="cp1251" overwrite="true">
+      <fileset dir="${test.scr.dir}">
+        <include name="**/*.html" />
+      </fileset>
+    </copy>
+  </target>
+
+  <target name="build" description="Builds common project files." depends="-init">
     <copy todir="${build.common.dir}" filtering="true"
           encoding="UTF-8" outputencoding="UTF-8" overwrite="true">
       <filterset refid="commonFilterSet" />
