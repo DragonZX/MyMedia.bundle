@@ -21,7 +21,7 @@
   </target>
 
   <target name="test"
-          description="Runs all project unit tests. Add '-DexcludeRemote=' to command line to exclude remote tests."
+          description="Runs all project unit tests. Add '-DexcludeRemote=' to command line to exclude remote tests. Add -DlogLevel=2 to set log level (0-5)."
           depends="kinopoisk-test">
   </target>
 
@@ -45,9 +45,10 @@
       <fileset dir="${plugin.code.dir}">
         <exclude name="__init__.py" />
       </fileset>
+      <fileset dir="${test.scr.common.dir}" />
     </copy>
     <exec dir="${kinopoisk.build.test.dir}" executable="python" failonerror="true">
-      <arg line="main.py ${isExcludeRemote}" />
+      <arg line="main.py --log=${logLevel} ${isExcludeRemote}" />
     </exec>
   </target>
 
@@ -142,6 +143,9 @@
           description="Initializes necessary properties and creates directories for project build.">
     <condition property="isExcludeRemote" value="--exclude-remote" else="">
       <isset property="excludeRemote" />
+    </condition>
+    <condition property="logLevel" else="0">
+      <isset property="logLevel" />
     </condition>
 
     <tstamp>

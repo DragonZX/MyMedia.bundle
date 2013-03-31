@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 #
-# Main test suite for the KinoPoiskRu Plex metadata plugin.
+# Test utilities for the RussianPlex project.
 #
-# Copyright (C) 2012  Zhenya Nyden
+# Copyright (C) 2013  Zhenya Nyden
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -21,15 +21,20 @@
 # @author zhenya (Yevgeny Nyden)
 #
 
-import unittest, sys
-import testutil as U, peoplepage_test
+from optparse import OptionParser
 
 
-if __name__ == '__main__':
-  # When changing this code, pls make sure to adjust __main__ method
-  # in individual test files accordingly (in case we'd want to run them separately).
-  (options, args) = U.parseTestOptions()
-  peoplepage_test.logLevel = options.logLevel
-  runner = unittest.TextTestRunner(verbosity=2)
-  result = runner.run(peoplepage_test.suite(options.excludeRemote))
-  sys.exit(U.getExitCode(result))
+def parseTestOptions():
+  parser = OptionParser()
+  parser.add_option('-x', '--exclude-remote', action='store_true', default=False, dest='excludeRemote',
+      help='Excludes tests that attempt to download remote content.')
+  parser.add_option('-l', '--log', action='store', type='int', default=1, dest='logLevel',
+      help='Sets the log level; supported values: [0,5].')
+  return parser.parse_args()
+
+
+def getExitCode(result):
+  exitCode = 0
+  if len(result.errors) > 0 or len(result.failures) > 0:
+    exitCode = 1
+  return exitCode

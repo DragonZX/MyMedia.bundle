@@ -20,10 +20,13 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #
 
-import urllib2, codecs, unittest
+import sys, urllib2, codecs, unittest
 from lxml import etree
 import pluginsettings as S
+import testutil as U
+from testlog import TestLogger as Logger
 
+logLevel = 0
 
 # Expect KinoPoiskRu's code in classpath or in the same directory.
 import common, pageparser
@@ -48,7 +51,9 @@ def suite(excludeRemoteTests = False):
 
 class PeoplePageTest(unittest.TestCase):
   def setUp(self):
-    pass
+    self.parser = pageparser.PeopleParser(Logger(logLevel))
+    if logLevel > 0:
+      print '' # Put log statement on a new line.
 
   def tearDown(self):
     pass
@@ -78,7 +83,7 @@ class PeoplePageTest(unittest.TestCase):
     fileHandle = codecs.open(filename, "r", S.ENCODING_KINOPOISK_PAGE)
     fileContent = fileHandle.read()
     page = etree.HTML(fileContent)
-    return pageparser.parsePeoplePage(page, loadAllActors)
+    return self.parser.parse(page, loadAllActors)
 
   def _requestAndParseHtmlPage(self, url, loadAllActors):
     opener = urllib2.build_opener()
@@ -86,7 +91,7 @@ class PeoplePageTest(unittest.TestCase):
     response = opener.open(url)
     content = response.read().decode(S.ENCODING_KINOPOISK_PAGE)
     page = etree.HTML(content)
-    return pageparser.parsePeoplePage(page, loadAllActors)
+    return self.parser.parse(page, loadAllActors)
 
   def _assertActorsDataFound(self, data, numberOfActors):
     self.assertIn('actors', data, 'Actors data is not found.')
@@ -123,6 +128,10 @@ class PeoplePageTest(unittest.TestCase):
     self.assertTrue(expected == fact, msg + ' Expected "' + expected + '", but was "' + str(fact) + '".')
 
 if __name__ == '__main__':
-  runner = unittest.TextTestRunner()
-  runner.run(suite())
+  # When changing this code, pls make sure to adjust main.py accordingly.
+  (options, args) = U.parseTestOptions()
+  logLevel = options.logLevel
+  runner = unittest.TextTestRunner(verbosity=2)
+  result = runner.run(suite())
+  sys.exit(U.getExitCode(result))
 
