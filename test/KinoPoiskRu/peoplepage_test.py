@@ -51,8 +51,9 @@ def suite(excludeRemoteTests = False):
 
 class PeoplePageTest(unittest.TestCase):
   def setUp(self):
-    self.parser = pageparser.PeopleParser(Logger(logLevel))
+    self.parser = pageparser.PeopleParser(Logger(logLevel), logLevel > 4)
     if logLevel > 0:
+      sys.stdout.flush()
       print '' # Put log statement on a new line.
 
   def tearDown(self):
@@ -115,6 +116,7 @@ class PeoplePageTest(unittest.TestCase):
     self._assertActor(actors, 10, 'Элиас Котеас', 'Laeddis')
     self._assertActor(actors, 11, 'Робин Бартлетт', 'Bridget Kearns')
     self._assertActor(actors, 12, 'Кристофер Денхам', 'Peter Breene')
+    self._assertActor(actors, 40, 'Джеффри Кораццини', 'Boardroom Guard') # Should have no ', в титрах не указана'.
 
   def _assertActor(self, actors, index, name, role):
     self.assertGreater(len(actors), index, 'Index too large.')
