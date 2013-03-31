@@ -35,6 +35,13 @@ import common, pageparser
 ACTORS_PAGE_397667 = 'data/actors_397667.html'
 ACTORS_PAGE_397667_URL = S.KINOPOISK_PEOPLE % '397667' # http://www.kinopoisk.ru/film/397667/cast/
 
+# This page has first two actors with wrong DOM, so it should produce parsing errors.
+ACTORS_PAGE_397667_ACTOR_ERRORS = 'data/actors_397667_actorErrors.html'
+
+# Actors page is not found.
+ACTORS_PAGE_404_ERROR = 'data/404.html'
+
+
 def dump(obj):
   for attr in dir(obj):
     print "obj.%s = %s" % (attr, getattr(obj, attr))
@@ -44,6 +51,8 @@ def suite(excludeRemoteTests = False):
   suite = unittest.TestSuite()
   suite.addTest(PeoplePageTest('localTest_peoplePage_notAll'))
   suite.addTest(PeoplePageTest('localTest_peoplePage_all'))
+  suite.addTest(PeoplePageTest('localTest_peoplePage_actorErrors'))
+  suite.addTest(PeoplePageTest('localTest_peoplePage_pageError'))
   if not excludeRemoteTests:
     suite.addTest(PeoplePageTest('remoteTest_peoplePage_all'))
   return suite
@@ -62,17 +71,35 @@ class PeoplePageTest(unittest.TestCase):
   ######## TESTS START HERE ####################################################
 
   def localTest_peoplePage_notAll(self):
+    """ Tests a typical page full of actors loaded from filesystem (with loadAllActors=False). """
     data = self._readAndParseLocalFile(ACTORS_PAGE_397667, False)
     actors = self._assertActorsDataFound(data, pageparser.MAX_ACTORS)
     self._assertActorsFromPage397667(actors)
 
   def localTest_peoplePage_all(self):
+    """ Tests a typical page full of actors loaded from filesystem (with loadAllActors=True). """
     data = self._readAndParseLocalFile(ACTORS_PAGE_397667, True)
     actors = self._assertActorsDataFound(data, pageparser.MAX_ALL_ACTORS)
     self._assertActorsFromPage397667(actors)
     self._assertMoreActorsFromPage397667(actors)
 
+  def localTest_peoplePage_actorErrors(self):
+    """ Tests handling errors - first two actors errors should not prevent parsing the rest. """
+    data = self._readAndParseLocalFile(ACTORS_PAGE_397667_ACTOR_ERRORS, False)
+    actors = self._assertActorsDataFound(data, pageparser.MAX_ACTORS)
+    # Checking just three first actors.
+    self._assertActor(actors, 0, 'Бен Кингсли', 'Dr. Cawley')
+    self._assertActor(actors, 1, 'Макс фон Сюдов', 'Dr. Naehring')
+    self._assertActor(actors, 2, 'Мишель Уильямс', 'Dolores')
+
+  def localTest_peoplePage_pageError(self):
+    """ Tests handling errors - page parsing error should not throw exceptions. """
+    data = self._readAndParseLocalFile(ACTORS_PAGE_404_ERROR, False)
+    self.assertIsNotNone(data, 'Returned data is None.')
+    self._assertActorsDataFound(data, 0)
+
   def remoteTest_peoplePage_all(self):
+    """ Tests a typical page full of actors loaded from KinoPoisk (with loadAllActors=True). """
     data = self._requestAndParseHtmlPage(ACTORS_PAGE_397667_URL, True)
     actors = self._assertActorsDataFound(data, pageparser.MAX_ALL_ACTORS)
     self._assertActorsFromPage397667(actors)
@@ -98,7 +125,7 @@ class PeoplePageTest(unittest.TestCase):
     self.assertIn('actors', data, 'Actors data is not found.')
     actors = data['actors']
     self.assertIsNotNone(actors, 'Actors data is not set.')
-    self.assertEquals(numberOfActors, len(actors), 'Wrong number of actors.')
+    self._assertEquals(numberOfActors, len(actors), 'Wrong number of actors.')
     return actors
 
   def _assertActorsFromPage397667(self, actors):
@@ -123,11 +150,11 @@ class PeoplePageTest(unittest.TestCase):
     actorTuple = actors[index]
     self.assertIsNotNone(actorTuple, 'Actor ' + str(index) + ' tuple is None.')
     self.assertEquals(2, len(actorTuple), 'Wrong number of items in actor ' + str(index) + ' tuple.')
-    self._assertStringsEqual(name, actorTuple[0], 'Wrong actor ' + str(index) + ' name.')
-    self._assertStringsEqual(role, actorTuple[1], 'Wrong actor ' + str(index) + ' role.')
+    self._assertEquals(name, actorTuple[0], 'Wrong actor ' + str(index) + ' name.')
+    self._assertEquals(role, actorTuple[1], 'Wrong actor ' + str(index) + ' role.')
 
-  def _assertStringsEqual(self, expected, fact, msg):
-    self.assertTrue(expected == fact, msg + ' Expected "' + expected + '", but was "' + str(fact) + '".')
+  def _assertEquals(self, expected, fact, msg):
+    self.assertTrue(expected == fact, msg + ' Expected "' + str(expected) + '", but was "' + str(fact) + '".')
 
 if __name__ == '__main__':
   # When changing this code, pls make sure to adjust main.py accordingly.
