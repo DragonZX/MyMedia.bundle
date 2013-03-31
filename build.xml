@@ -20,6 +20,11 @@
           description="Creates archive release files of all plugins.">
   </target>
 
+  <target name="test"
+          description="Runs all project unit tests. Add '-DexcludeRemote=' to command line to exclude remote tests."
+          depends="kinopoisk-test">
+  </target>
+
   <target name="wiki-dist"
           description="Creates an archive release file of WikipediaRu plugin."
           depends="build">
@@ -42,7 +47,7 @@
       </fileset>
     </copy>
     <exec dir="${kinopoisk.build.test.dir}" executable="python" failonerror="true">
-      <arg line="main.py" />
+      <arg line="main.py ${isExcludeRemote}" />
     </exec>
   </target>
 
@@ -135,6 +140,10 @@
 
   <target name="-init"
           description="Initializes necessary properties and creates directories for project build.">
+    <condition property="isExcludeRemote" value="--exclude-remote" else="">
+      <isset property="excludeRemote" />
+    </condition>
+
     <tstamp>
       <format property="current.date" pattern="MM-dd-yyyy" />
       <format property="current.time" pattern="hh:mm" />

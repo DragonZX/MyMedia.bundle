@@ -21,12 +21,20 @@
 # @author zhenya (Yevgeny Nyden)
 #
 
-import unittest
+import unittest, sys
+from optparse import OptionParser
 import peoplepage_test
 
 
 if __name__ == '__main__':
+  parser = OptionParser()
+  parser.add_option('-x', '--exclude-remote', action='store_true', default=False, dest='excludeRemote',
+      help='Excludes tests that attempt to download remote content.')
+  (options, args) = parser.parse_args()
+
   runner = unittest.TextTestRunner()
-  runner.run(peoplepage_test.suite())
-  # TODO(zhenya): exit with 0 or 1 depending on the test result.
-  # sys.exit(1)
+  result = runner.run(peoplepage_test.suite(options.excludeRemote))
+  exitCode = 0
+  if len(result.errors) > 0 or len(result.failures) > 0:
+    exitCode = 1
+  sys.exit(exitCode)

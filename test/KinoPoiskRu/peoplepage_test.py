@@ -22,6 +22,7 @@
 
 import urllib2, codecs, unittest
 from lxml import etree
+import pluginsettings as S
 
 
 # Expect KinoPoiskRu's code in classpath or in the same directory.
@@ -29,7 +30,7 @@ import common, pageparser
 
 # A typical page full of actor records: "Остров проклятых" (2009) [eng: "Shutter Island"].
 ACTORS_PAGE_397667 = 'data/actors_397667.html'
-ACTORS_PAGE_397667_URL = 'http://www.kinopoisk.ru/film/397667/cast/'
+ACTORS_PAGE_397667_URL = S.KINOPOISK_PEOPLE % '397667' # http://www.kinopoisk.ru/film/397667/cast/
 
 def dump(obj):
   for attr in dir(obj):
@@ -63,16 +64,18 @@ class PeoplePageTest(unittest.TestCase):
     data = self._readAndParseLocalFile(ACTORS_PAGE_397667, True)
     actors = self._assertActorsDataFound(data, pageparser.MAX_ALL_ACTORS)
     self._assertActorsFromPage397667(actors)
+    self._assertMoreActorsFromPage397667(actors)
 
   def remoteTest_peoplePage_all(self):
     data = self._requestAndParseHtmlPage(ACTORS_PAGE_397667_URL, True)
     actors = self._assertActorsDataFound(data, pageparser.MAX_ALL_ACTORS)
     self._assertActorsFromPage397667(actors)
+    self._assertMoreActorsFromPage397667(actors)
 
   ######## TESTS END HERE ######################################################
 
   def _readAndParseLocalFile(self, filename, loadAllActors):
-    fileHandle = codecs.open(filename, "r", pageparser.ENCODING_KINOPOISK_PAGE)
+    fileHandle = codecs.open(filename, "r", S.ENCODING_KINOPOISK_PAGE)
     fileContent = fileHandle.read()
     page = etree.HTML(fileContent)
     return pageparser.parsePeoplePage(page, loadAllActors)
@@ -81,7 +84,7 @@ class PeoplePageTest(unittest.TestCase):
     opener = urllib2.build_opener()
     opener.addheaders = [('User-agent', common.USER_AGENT)]
     response = opener.open(url)
-    content = response.read().decode(pageparser.ENCODING_KINOPOISK_PAGE)
+    content = response.read().decode(S.ENCODING_KINOPOISK_PAGE)
     page = etree.HTML(content)
     return pageparser.parsePeoplePage(page, loadAllActors)
 
@@ -101,6 +104,12 @@ class PeoplePageTest(unittest.TestCase):
     self._assertActor(actors, 4, 'Мишель Уильямс', 'Dolores')
     self._assertActor(actors, 5, 'Эмили Мортимер', 'Rachel 1')
     self._assertActor(actors, 6, 'Патришия Кларксон', 'Rachel 2')
+
+  def _assertMoreActorsFromPage397667(self, actors):
+    # A few more actors.
+    self._assertActor(actors, 10, 'Элиас Котеас', 'Laeddis')
+    self._assertActor(actors, 11, 'Робин Бартлетт', 'Bridget Kearns')
+    self._assertActor(actors, 12, 'Кристофер Денхам', 'Peter Breene')
 
   def _assertActor(self, actors, index, name, role):
     self.assertGreater(len(actors), index, 'Index too large.')
