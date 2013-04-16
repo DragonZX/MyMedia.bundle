@@ -16,6 +16,21 @@
     </echo>
   </target>
 
+
+  <target name="install" depends="kinopoisk-install"
+          description="Installs plugins into a local directory.">
+  </target>
+
+  <target name="kinopoisk-install" depends="kinopoisk-dist"
+          description="Installs KinoPoiskRu plugin into a local directory.">
+    <available file="${plex.plugins.dir}" property="isPlexDirectoryExists" />
+    <fail unless="isPlexDirectoryExists" message="Plex plugins directory ${plex.plugins.dir} does not exist!" />
+    <delete dir="${plex.plugins.dir}/${kinopoisk.plugin.dirName}" failonerror="false" />
+    <copy todir="${plex.plugins.dir}/${kinopoisk.plugin.dirName}">
+      <fileset dir="${build.assembly.dir}/${kinopoisk.plugin.dirName}" />
+    </copy>
+  </target>
+
   <target name="dist" depends="wiki-dist, kinopoisk-dist, weewza-dist, 1tvru-dist"
           description="Creates archive release files of all plugins.">
   </target>

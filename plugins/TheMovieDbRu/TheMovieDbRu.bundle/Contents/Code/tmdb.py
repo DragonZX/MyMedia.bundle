@@ -47,10 +47,10 @@ def searchForImdbTitles(mediaName, mediaYear, lang):
     itemIndex = 0
     for movieElem in movieElems:
       try:
-        imdbId = common.getXpathRequiredNode(movieElem, './imdb_id/text()')
-        title = common.getXpathRequiredNode(movieElem, './name/text()')
-        altTitle = common.getXpathOptionalNode(movieElem, './alternative_name/text()')
-        releaseDate = common.getXpathOptionalNode(movieElem, './released/text()')
+        imdbId = common.getXpathRequiredText(movieElem, './imdb_id/text()')
+        title = common.getXpathRequiredText(movieElem, './name/text()')
+        altTitle = common.getXpathOptionalText(movieElem, './alternative_name/text()')
+        releaseDate = common.getXpathOptionalText(movieElem, './released/text()')
         year = common.getReOptionalGroup(MATCHER_RELEASED, releaseDate, 0)
         score = common.scoreMediaTitleMatch(mediaName, mediaYear, title, altTitle, year, itemIndex)
         matches.append({'id': imdbId, 'name': title, 'year': year, 'score': score})

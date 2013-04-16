@@ -20,31 +20,23 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #
 
-import sys, urllib2, codecs, unittest
-from lxml import etree
+import sys, unittest
 import pluginsettings as S
-import testutil as U
-from testlog import TestLogger as Logger
+import testutil as U, testlog
 
-logLevel = 0
 
 # Expect KinoPoiskRu's code in classpath or in the same directory.
 import common, pageparser
 
 # A typical page full of actor records: "Остров проклятых" (2009) [eng: "Shutter Island"].
+SHUTTER_ISLAND_ID = '397667'
 ACTORS_PAGE_397667 = 'data/actors_397667.html'
-ACTORS_PAGE_397667_URL = S.KINOPOISK_PEOPLE % '397667' # http://www.kinopoisk.ru/film/397667/cast/
 
 # This page has first two actors with wrong DOM, so it should produce parsing errors.
 ACTORS_PAGE_397667_ACTOR_ERRORS = 'data/actors_397667_actorErrors.html'
 
 # Actors page is not found.
 ACTORS_PAGE_404_ERROR = 'data/404.html'
-
-
-def dump(obj):
-  for attr in dir(obj):
-    print "obj.%s = %s" % (attr, getattr(obj, attr))
 
 
 def suite(excludeRemoteTests = False):
@@ -58,10 +50,13 @@ def suite(excludeRemoteTests = False):
   return suite
 
 
-class PeoplePageTest(unittest.TestCase):
+class PeoplePageTest(U.PageTest):
+  def __init__(self, testName):
+    super(PeoplePageTest, self).__init__(testName, S.ENCODING_KINOPOISK_PAGE, pageparser.USER_AGENT)
+
   def setUp(self):
-    self.parser = pageparser.PeopleParser(Logger(logLevel), logLevel > 4)
-    if logLevel > 0:
+    self.parser = pageparser.PageParser(self.log, self.http, testlog.logLevel > 4)
+    if testlog.logLevel > 0:
       sys.stdout.flush()
       print '' # Put log statement on a new line.
 
@@ -72,21 +67,21 @@ class PeoplePageTest(unittest.TestCase):
 
   def localTest_peoplePage_notAll(self):
     """ Tests a typical page full of actors loaded from filesystem (with loadAllActors=False). """
-    data = self._readAndParseLocalFile(ACTORS_PAGE_397667, False)
-    actors = self._assertActorsDataFound(data, pageparser.MAX_ACTORS)
+    data = self.__readAndParseLocalFile(ACTORS_PAGE_397667, False)
+    actors = self.fetchKeyArrayDataItem(data, 'actors', pageparser.MAX_ACTORS)
     self._assertActorsFromPage397667(actors)
 
   def localTest_peoplePage_all(self):
     """ Tests a typical page full of actors loaded from filesystem (with loadAllActors=True). """
-    data = self._readAndParseLocalFile(ACTORS_PAGE_397667, True)
-    actors = self._assertActorsDataFound(data, pageparser.MAX_ALL_ACTORS)
+    data = self.__readAndParseLocalFile(ACTORS_PAGE_397667, True)
+    actors = self.fetchKeyArrayDataItem(data, 'actors', pageparser.MAX_ALL_ACTORS)
     self._assertActorsFromPage397667(actors)
     self._assertMoreActorsFromPage397667(actors)
 
   def localTest_peoplePage_actorErrors(self):
     """ Tests handling errors - first two actors errors should not prevent parsing the rest. """
-    data = self._readAndParseLocalFile(ACTORS_PAGE_397667_ACTOR_ERRORS, False)
-    actors = self._assertActorsDataFound(data, pageparser.MAX_ACTORS)
+    data = self.__readAndParseLocalFile(ACTORS_PAGE_397667_ACTOR_ERRORS, False)
+    actors = self.fetchKeyArrayDataItem(data, 'actors', pageparser.MAX_ACTORS)
     # Checking just three first actors.
     self._assertActor(actors, 0, 'Бен Кингсли', 'Dr. Cawley')
     self._assertActor(actors, 1, 'Макс фон Сюдов', 'Dr. Naehring')
@@ -94,39 +89,22 @@ class PeoplePageTest(unittest.TestCase):
 
   def localTest_peoplePage_pageError(self):
     """ Tests handling errors - page parsing error should not throw exceptions. """
-    data = self._readAndParseLocalFile(ACTORS_PAGE_404_ERROR, False)
+    data = self.__readAndParseLocalFile(ACTORS_PAGE_404_ERROR, False)
     self.assertIsNotNone(data, 'Returned data is None.')
-    self._assertActorsDataFound(data, 0)
+    self.fetchKeyArrayDataItem(data, 'actors', 0)
 
   def remoteTest_peoplePage_all(self):
     """ Tests a typical page full of actors loaded from KinoPoisk (with loadAllActors=True). """
-    data = self._requestAndParseHtmlPage(ACTORS_PAGE_397667_URL, True)
-    actors = self._assertActorsDataFound(data, pageparser.MAX_ALL_ACTORS)
+    data = self.parser.fetchAndParseCastPage(SHUTTER_ISLAND_ID, True)
+    actors = self.fetchKeyArrayDataItem(data, 'actors', pageparser.MAX_ALL_ACTORS)
     self._assertActorsFromPage397667(actors)
     self._assertMoreActorsFromPage397667(actors)
 
   ######## TESTS END HERE ######################################################
 
-  def _readAndParseLocalFile(self, filename, loadAllActors):
-    fileHandle = codecs.open(filename, "r", S.ENCODING_KINOPOISK_PAGE)
-    fileContent = fileHandle.read()
-    page = etree.HTML(fileContent)
-    return self.parser.parse(page, loadAllActors)
-
-  def _requestAndParseHtmlPage(self, url, loadAllActors):
-    opener = urllib2.build_opener()
-    opener.addheaders = [('User-agent', common.USER_AGENT)]
-    response = opener.open(url)
-    content = response.read().decode(S.ENCODING_KINOPOISK_PAGE)
-    page = etree.HTML(content)
-    return self.parser.parse(page, loadAllActors)
-
-  def _assertActorsDataFound(self, data, numberOfActors):
-    self.assertIn('actors', data, 'Actors data is not found.')
-    actors = data['actors']
-    self.assertIsNotNone(actors, 'Actors data is not set.')
-    self._assertEquals(numberOfActors, len(actors), 'Wrong number of actors.')
-    return actors
+  def __readAndParseLocalFile(self, filename, loadAllActors):
+    page = self.readLocalFile(filename)
+    return self.parser.parseCastPage(page, loadAllActors)
 
   def _assertActorsFromPage397667(self, actors):
     # Just 7 should be enough.
@@ -143,7 +121,7 @@ class PeoplePageTest(unittest.TestCase):
     self._assertActor(actors, 10, 'Элиас Котеас', 'Laeddis')
     self._assertActor(actors, 11, 'Робин Бартлетт', 'Bridget Kearns')
     self._assertActor(actors, 12, 'Кристофер Денхам', 'Peter Breene')
-    self._assertActor(actors, 40, 'Джеффри Кораццини', 'Boardroom Guard') # Should have no ', в титрах не указана'.
+    self._assertActor(actors, 40, 'Дэнни Карни', 'Nazi SS Guard') # Should have no ', в титрах не указана'.
 
   def _assertActor(self, actors, index, name, role):
     self.assertGreater(len(actors), index, 'Index too large.')
@@ -159,8 +137,8 @@ class PeoplePageTest(unittest.TestCase):
 if __name__ == '__main__':
   # When changing this code, pls make sure to adjust main.py accordingly.
   (options, args) = U.parseTestOptions()
-  logLevel = options.logLevel
-  runner = unittest.TextTestRunner(verbosity=2)
-  result = runner.run(suite())
+  testlog.logLevel = options.logLevel
+  runner = unittest.TextTestRunner(verbosity=testlog.TEST_RUNNER_VERBOSITY)
+  result = runner.run(suite(options.excludeRemote))
   sys.exit(U.getExitCode(result))
 

@@ -21,6 +21,12 @@
 # @author zhenya (Yevgeny Nyden)
 #
 
+
+TEST_RUNNER_VERBOSITY = 2
+
+logLevel = 0
+
+
 class TestLogger():
 
   def __init__(self, level):

@@ -22,9 +22,10 @@
 # @author zhenya (Yevgeny Nyden)
 # @revision @REPOSITORY.REVISION@
 
-import string, sys, time, re
+import string, sys, time, re, math
 
-USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_2) AppleWebKit/534.51.22 (KHTML, like Gecko) Version/5.1.1 Safari/534.51.22'
+USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_3) AppleWebKit/537.22 (KHTML, like Gecko) Chrome/25.0.1364.172 Safari/537.22'
+#USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_2) AppleWebKit/534.51.22 (KHTML, like Gecko) Version/5.1.1 Safari/534.51.22'
 ENCODING_PLEX = 'utf-8'
 
 SCORE_PENALTY_ITEM_ORDER = 2
@@ -52,16 +53,21 @@ ART_SCORE_MAX_RESOLUTION_PX = 1000 * 1000
 class Thumbnail:
   """ Represents an image search result data.
   """
-  def __init__(self, thumbImgUrl, fullImgUrl, fullImgWidth, fullImgHeight, index, score):
-    self.thumbImgUrl = thumbImgUrl
-    self.fullImgUrl = fullImgUrl
-    self.fullImgWidth = fullImgWidth
-    self.fullImgHeight = fullImgHeight
+  def __init__(self, thumbUrl, url, width, height, index, score):
+    self.thumbUrl = thumbUrl
+    self.url = url
+    self.width = width
+    self.height = height
     self.index = index
     self.score = score
 
   def __repr__(self):
-    return repr((self.thumbImgUrl, self.fullImgUrl, self.fullImgWidth, self.fullImgHeight, self.index, self.score))
+    return repr((self.thumbUrl, self.url, self.width, self.height, self.index, self.score))
+
+  def __str__(self):
+    return '[%s] %sx%s, score=%s, thumb=%s, full=%s' % \
+        (str(self.index), str(self.width), str(self.height),
+        str(self.score), str(self.thumbUrl), str(self.url))
 
 def ThumbnailCmp(one, two):
   return one.score - two.score
@@ -159,14 +165,14 @@ def parseAndSetCacheTimeFromPrefs(cacheTimeName, cacheTimeDefault):
   return cacheTime
 
 
-def getElementFromHttpRequest(url, encoding):
+def getElementFromHttpRequest(url, encoding, userAgent=USER_AGENT):
   """ Fetches a given URL and returns it as an element.
       Функция преобразования html-кода в xml-код.
   """
   for i in range(3):
     errorCount = 0
     try:
-      response = HTTP.Request(url, headers = {'User-agent': USER_AGENT, 'Accept': 'text/html'})
+      response = HTTP.Request(url, headers = {'User-agent': userAgent, 'Accept': 'text/html'})
       return HTML.ElementFromString(str(response).decode(encoding))
     except:
       errorCount += 1
@@ -175,14 +181,32 @@ def getElementFromHttpRequest(url, encoding):
   return None
 
 
-def getResponseFromHttpRequest(url):
+def requestImageJpeg(url, userAgent):
   """ Requests an image given its URL and returns a request object.
   """
   try:
-    response = HTTP.Request(url, headers = {'User-agent': USER_AGENT, 'Accept': 'image/jpeg'})
+    response = HTTP.Request(url, headers = {
+      'User-agent': userAgent,
+      'Accept': 'image/jpeg'
+    })
     return response
   except:
     Log.Debug('Error fetching URL: "%s".' % url)
+  return None
+
+
+def getWin1252ResponseFromHttpRequest(url):
+  """ Requests an image given its URL and returns a request object.
+  """
+  try:
+    response = HTTP.Request(url, headers = {
+      'User-agent': USER_AGENT,
+      'Accept-Charset': 'ISO-8859-1;q=0.7,*;q=0.3',
+      'Accept-Language': 'en-US,en;q=0.8'
+    })
+    return response
+  except:
+    Log.Error('Error fetching URL: "%s".' % url)
   return None
 
 
@@ -202,7 +226,7 @@ def printImageSearchResults(thumbnailList):
   index = 0
   for result in thumbnailList:
     Log.Debug(' ... %d: index=%s, score=%s, URL="%s".' %
-              (index, result.index, result.score, result.fullImgUrl))
+              (index, result.index, result.score, result.url))
     index += 1
   return None
 
@@ -267,10 +291,8 @@ def scoreThumbnailResult(thumb, isPoster):
   """ Given a Thumbnail object that represents an poster or a funart result,
       scores it, and stores the score on the passed object (thumb.score).
   """
-  Log.Debug('-------Scoring image %sx%s with index %d:\nfull image URL: "%s"\nthumb image URL: %s' %
-                    (str(thumb.fullImgWidth), str(thumb.fullImgHeight), thumb.index, str(thumb.fullImgUrl), str(thumb.thumbImgUrl)))
   score = 0
-  if thumb.fullImgUrl is None:
+  if thumb.url is None:
     thumb.score = 0
     return
 
@@ -278,10 +300,9 @@ def scoreThumbnailResult(thumb, isPoster):
     # Score bonus from index for items below 10 on the list.
     bonus = IMAGE_SCORE_ITEM_ORDER_BONUS_MAX * \
         ((IMAGE_SCORE_MAX_NUMBER_OF_ITEMS - thumb.index) / float(IMAGE_SCORE_MAX_NUMBER_OF_ITEMS))
-    Log.Debug('++++ adding order bonus: +%s' % str(bonus))
     score += bonus
 
-  if thumb.fullImgWidth is not None and thumb.fullImgHeight is not None:
+  if thumb.width is not None and thumb.height is not None:
     # Get a resolution bonus if width*height is more than a certain min value.
     if isPoster:
       minPx = POSTER_SCORE_MIN_RESOLUTION_PX
@@ -291,36 +312,25 @@ def scoreThumbnailResult(thumb, isPoster):
       minPx = ART_SCORE_MIN_RESOLUTION_PX
       maxPx = ART_SCORE_MAX_RESOLUTION_PX
       bestRatio = ART_SCORE_BEST_RATIO
-    pixelsCount = thumb.fullImgWidth * thumb.fullImgHeight
+    pixelsCount = thumb.width * thumb.height
     if pixelsCount > minPx:
       if pixelsCount > maxPx:
         pixelsCount = maxPx
       bonus = float(IMAGE_SCORE_RESOLUTION_BONUS_MAX) * \
           float((pixelsCount - minPx)) / float((maxPx - minPx))
-      Log.Debug('++++ adding resolution bonus: +%s' % str(bonus))
       score += bonus
-    else:
-      Log.Debug('++++ no resolution bonus for %dx%d' % (thumb.fullImgWidth, thumb.fullImgHeight))
 
     # Get an orientation (Portrait vs Landscape) bonus. (we prefer images that are have portrait orientation.
-    ratio = thumb.fullImgWidth / float(thumb.fullImgHeight)
+    ratio = thumb.width / float(thumb.height)
     ratioDiff = math.fabs(bestRatio - ratio)
     if ratioDiff < 0.5:
       bonus = IMAGE_SCORE_RATIO_BONUS_MAX * (0.5 - ratioDiff) * 2.0
-      Log.Debug('++++ adding "%s" ratio bonus: +%s' % (str(ratio), str(bonus)))
       score += bonus
-    else:
-      # Ignoring Landscape ratios.
-      Log.Debug('++++ no ratio bonus for %dx%d' % (thumb.fullImgWidth, thumb.fullImgHeight))
-  else:
-    Log.Debug('++++ no size set - no resolution and no ratio bonus')
 
   # Get a bonus if image has a separate thumbnail URL.
-  if thumb.thumbImgUrl is not None and thumb.fullImgUrl != thumb.thumbImgUrl:
-    Log.Debug('++++ adding thumbnail bonus: +%d' % IMAGE_SCORE_THUMB_BONUS)
+  if thumb.thumbUrl is not None and thumb.url != thumb.thumbUrl:
     score += IMAGE_SCORE_THUMB_BONUS
 
-  Log.Debug('--------- SCORE: %d' % int(score))
   thumb.score = int(score)
 
 
@@ -362,6 +372,16 @@ def getXpathOptionalNode(elem, xpath):
   """
   valueElems = elem.xpath(xpath)
   if len(valueElems) > 0:
+    return valueElems[0]
+  return None
+
+
+def getXpathOptionalText(elem, xpath):
+  """ Evaluates a given xpath expression against a given node and
+      returns the first result or None if there are no results.
+  """
+  valueElems = elem.xpath(xpath)
+  if len(valueElems) > 0:
     return valueElems[0].strip()
   return None
 
@@ -379,11 +399,11 @@ def getXpathOptionalNodeStrings(elem, xpath):
   return values
 
 
-def getXpathRequiredNode(elem, xpath):
+def getXpathRequiredText(elem, xpath):
   """ Evaluates a given xpath expression against a given node and
       returns the first result. Throws an exception if there are no results.
   """
-  value = getXpathOptionalNode(elem, xpath)
+  value = getXpathOptionalText(elem, xpath)
   if value is None:
     raise Exception('Unable to evaluate xpath "%s"' % str(xpath))
   return value
@@ -401,3 +421,14 @@ def getReOptionalGroup(matcher, str, groupInd):
       if len(groups) > groupInd:
         return groups[groupInd]
   return None
+
+class HttpUtils():
+  def __init__(self, encoding, userAgent):
+    self.encoding = encoding
+    self.userAgent = userAgent
+
+  def requestAndParseHtmlPage(self, url):
+    return getElementFromHttpRequest(url, self.encoding, self.userAgent)
+
+  def requestImageJpeg(self, url):
+    return requestImageJpeg(url, self.userAgent)

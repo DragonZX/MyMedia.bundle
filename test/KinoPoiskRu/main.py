@@ -22,14 +22,26 @@
 #
 
 import unittest, sys
-import testutil as U, peoplepage_test
+import testlog, testutil as U, titlepage_test, studiopage_test, peoplepage_test, imagepages_test
 
 
 if __name__ == '__main__':
   # When changing this code, pls make sure to adjust __main__ method
   # in individual test files accordingly (in case we'd want to run them separately).
   (options, args) = U.parseTestOptions()
-  peoplepage_test.logLevel = options.logLevel
-  runner = unittest.TextTestRunner(verbosity=2)
+  testlog.logLevel = options.logLevel
+  runner = unittest.TextTestRunner(verbosity=testlog.TEST_RUNNER_VERBOSITY)
+
+  result = runner.run(titlepage_test.suite(options.excludeRemote))
+  exitCode = U.getExitCode(result)
+
+  result = runner.run(studiopage_test.suite(options.excludeRemote))
+  exitCode |= U.getExitCode(result)
+
   result = runner.run(peoplepage_test.suite(options.excludeRemote))
-  sys.exit(U.getExitCode(result))
+  exitCode |= U.getExitCode(result)
+
+  result = runner.run(imagepages_test.suite(options.excludeRemote))
+  exitCode |= U.getExitCode(result)
+
+  sys.exit(exitCode)
