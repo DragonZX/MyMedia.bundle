@@ -32,12 +32,12 @@ MOVIE_OPERATIONI_ID = '42782'
 
 def suite(excludeRemoteTests = False):
   suite = unittest.TestSuite()
-#  suite.addTest(ImagePagesTest('localTest_parsePosterThumbnailData_None'))
+  suite.addTest(ImagePagesTest('localTest_parsePosterThumbnailData_None'))
   if not excludeRemoteTests:
-#    suite.addTest(ImagePagesTest('remoteTest_parsePosterThumbnailData_withBig'))
-#    suite.addTest(ImagePagesTest('remoteTest_parsePosterThumbnailData_rus'))
-#    suite.addTest(ImagePagesTest('remoteTest_parsePosterThumbnailData_eng'))
-#    suite.addTest(ImagePagesTest('remoteTest_fetchAndParsePostersData_one'))
+    suite.addTest(ImagePagesTest('remoteTest_parsePosterThumbnailData_withBig'))
+    suite.addTest(ImagePagesTest('remoteTest_parsePosterThumbnailData_rus'))
+    suite.addTest(ImagePagesTest('remoteTest_parsePosterThumbnailData_eng'))
+    suite.addTest(ImagePagesTest('remoteTest_fetchAndParsePostersData_one'))
     suite.addTest(ImagePagesTest('remoteTest_fetchAndParsePostersData_more'))
   return suite
 
@@ -75,7 +75,7 @@ class ImagePagesTest(U.PageTest):
 
   def remoteTest_parsePosterThumbnailData_rus(self):
     """ Tests a poster page for a Russian movie title loaded from kinopoisk.ru. """
-    data = self.parser.fetchAndParsePostersPage(MOVIE_RUS_ID)
+    data = self.parser.fetchAndParsePostersPage(MOVIE_RUS_ID, 15, 'posters')
     self.assertIsNotNone(data, 'data is None.')
     self.assertIn('posters', data, 'posters are not parsed.')
     posters = data['posters']
@@ -92,7 +92,7 @@ class ImagePagesTest(U.PageTest):
 
   def remoteTest_parsePosterThumbnailData_eng(self):
     """ Tests a poster page for an English movie title loaded from kinopoisk.ru. """
-    data = self.parser.fetchAndParsePostersPage(MOVIE_ENG_ID)
+    data = self.parser.fetchAndParsePostersPage(MOVIE_ENG_ID, 15, 'posters')
     self.assertIsNotNone(data, 'data is None.')
     self.assertIn('posters', data, 'posters are not parsed.')
     posters = data['posters']
@@ -144,7 +144,7 @@ class ImagePagesTest(U.PageTest):
     pages = []
     for pageInd in range(1, numOfPages + 1):
       pages.append(self.requestHtmlPage(S.KINOPOISK_POSTERS_URL % (kinoPoiskId, pageInd), S.ENCODING_KINOPOISK_PAGE))
-    return self.parser.parsePostersPage(pages)
+    return self.parser.parsePostersPage(pages, 10, 'posters')
 
   def assertThumbnail(self, thumb, index, score, thumbUrl, url, width, height):
     self.assertIsNotNone(thumb, 'Thumbnail %d - is not set.' % index)
