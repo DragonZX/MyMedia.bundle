@@ -79,8 +79,6 @@ class Preferences:
       (cacheTimeName, cacheTimeDefault),
       (imdbRatingName, imdbRatingDefault),
       (additionalRatingName, additionalRatingDefault)):
-    self.imageChoiceName = imageChoiceName
-    self.imageChoice = imageChoiceDefault
     self.maxPostersName = maxPostersName
     self.maxPosters = maxPostersDefault
     self.maxArtName = maxArtName
