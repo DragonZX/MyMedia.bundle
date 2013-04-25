@@ -40,8 +40,9 @@ TITLE_PAGE_43395 = 'data/title_43395.html'
 def suite(excludeRemoteTests = False):
   suite = unittest.TestSuite()
   suite.addTest(TitlePageTest('localTest_titlePage_basic'))
-  if not excludeRemoteTests:
-    suite.addTest(TitlePageTest('remoteTest_titlePage_basic'))
+  suite.addTest(TitlePageTest('localTest_parseMainActorsFromLanding'))
+#  if not excludeRemoteTests:
+#    suite.addTest(TitlePageTest('remoteTest_titlePage_basic'))
   return suite
 
 
@@ -64,6 +65,16 @@ class TitlePageTest(U.PageTest):
     """ Tests a typical title page loaded from filesystem. """
     data = self._readAndParseLocalFile(TITLE_PAGE_22907)
     self._assertTitlePage22907(data)
+
+  def localTest_parseMainActorsFromLanding(self):
+    """ Tests a typical title page loaded from filesystem. """
+    page = self.readLocalFile(TITLE_PAGE_22907)
+    actors = self.parser.parseMainActorsFromLanding(page)
+    self.assertIsNotNone(actors, 'actors is None.')
+    self._assertEquals(5, len(actors), 'Wrong number of actors.')
+    self._assertEquals('медведь Барт', actors[0], 'Wrong actor 0.')
+    self._assertEquals('медведь Юк', actors[1], 'Wrong actor 1.')
+    self._assertEquals('Андре Лакомб', actors[4], 'Wrong actor 4.')
 
   def remoteTest_titlePage_basic(self):
     """ Tests a typical title page loaded from KinoPoisk. """
