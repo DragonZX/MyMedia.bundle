@@ -41,8 +41,9 @@ def suite(excludeRemoteTests = False):
   suite = unittest.TestSuite()
   suite.addTest(TitlePageTest('localTest_titlePage_basic'))
   suite.addTest(TitlePageTest('localTest_parseMainActorsFromLanding'))
-#  if not excludeRemoteTests:
-#    suite.addTest(TitlePageTest('remoteTest_titlePage_basic'))
+  if not excludeRemoteTests:
+    suite.addTest(TitlePageTest('remoteTest_titlePage_basic'))
+    suite.addTest(TitlePageTest('remoteTest_parseMainActorsFromLanding'))
   return suite
 
 
@@ -70,17 +71,20 @@ class TitlePageTest(U.PageTest):
     """ Tests a typical title page loaded from filesystem. """
     page = self.readLocalFile(TITLE_PAGE_22907)
     actors = self.parser.parseMainActorsFromLanding(page)
-    self.assertIsNotNone(actors, 'actors is None.')
-    self._assertEquals(5, len(actors), 'Wrong number of actors.')
-    self._assertEquals('медведь Барт', actors[0], 'Wrong actor 0.')
-    self._assertEquals('медведь Юк', actors[1], 'Wrong actor 1.')
-    self._assertEquals('Андре Лакомб', actors[4], 'Wrong actor 4.')
+    self._assertTitlePageActors22907(actors)
 
   def remoteTest_titlePage_basic(self):
     """ Tests a typical title page loaded from KinoPoisk. """
     data = self.parser.fetchAndParseTitlePage(MEDVED_ID)
     self._assertTitlePage22907(data)
     pass
+
+  def remoteTest_parseMainActorsFromLanding(self):
+    """  """
+    page = self.http.requestAndParseHtmlPage(S.KINOPOISK_TITLE_PAGE_URL % MEDVED_ID)
+    actors = self.parser.parseMainActorsFromLanding(page)
+    self._assertTitlePageActors22907(actors)
+
 
   ######## TESTS END HERE ######################################################
 
@@ -106,6 +110,15 @@ class TitlePageTest(U.PageTest):
     self.assertKeyValueApproximateNumber(data, 'ratingCount', 6707)
     self.assertKeyValueApproximateNumber(data, 'imdbRating', 7.60, isFloat=True)
     self.assertKeyValueApproximateNumber(data, 'imdbRatingCount', 8942)
+
+  def _assertTitlePageActors22907(self, actors):
+    self.assertIsNotNone(actors, 'actors is None.')
+    self._assertEquals(5, len(actors), 'Wrong number of actors.')
+    self._assertEquals('Медведь Барт', actors[0], 'Wrong actor 0.')
+    self._assertEquals('Медведь Юк', actors[1], 'Wrong actor 1.')
+    self._assertEquals('Чеки Карио', actors[2], 'Wrong actor 2.')
+    self._assertEquals('Джек Уоллес', actors[3], 'Wrong actor 3.')
+    self._assertEquals('Андре Лакомб', actors[4], 'Wrong actor 4.')
 
 if __name__ == '__main__':
   # When changing this code, pls make sure to adjust main.py accordingly.

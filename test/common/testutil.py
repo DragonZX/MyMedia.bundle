@@ -62,20 +62,6 @@ class PageTest(unittest.TestCase):
     fileContent = fileHandle.read()
     return etree.HTML(fileContent)
 
-  def requestHtmlPage(self, url, encoding):
-    self.log.Debug('Fetching page from url "%s"...' % url)
-    return requestHtmlPage(url, encoding)
-
-  def requestImageJpeg(self, url):
-    self.log.Debug('Fetching image/jpeg from url "%s"...' % url)
-    opener = urllib2.build_opener()
-    opener.addheaders = [
-      ('User-agent', common.USER_AGENT),
-      ('Accept', 'image/jpeg'),
-      ('Cache-Control', 'max-age=0'),
-    ]
-    return opener.open(url)
-
   def assertKeyValueApproximateNumber(self, data, key, approxValue, percent=15, isFloat=False):
     self.assertIn(key, data, '%s is not parsed.' % key)
     valueStr = data[key]
