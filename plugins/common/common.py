@@ -22,7 +22,7 @@
 # @author zhenya (Yevgeny Nyden)
 # @revision @REPOSITORY.REVISION@
 
-import string, sys, time, re, math
+import sys, time, re, math, translit
 
 USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_3) AppleWebKit/537.22 (KHTML, like Gecko) Chrome/25.0.1364.172 Safari/537.22'
 #USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_2) AppleWebKit/534.51.22 (KHTML, like Gecko) Version/5.1.1 Safari/534.51.22'
@@ -258,6 +258,19 @@ def scoreMediaTitleMatch(mediaName, mediaYear, title, altTitle, year, itemIndex)
   altTitlePenalty = 100
   if altTitle is not None:
     altTitlePenalty = computeTitlePenalty(mediaName, altTitle)
+
+  # Get detranlitirated media name (in case filename is in latin characters),
+  # compare it's score with the original, and pick the min.
+  try:
+    altMediaName = translit.detranslify(mediaName)
+    detranslifiedTitlePenalty = computeTitlePenalty(altMediaName, title)
+    titlePenalty = min(detranslifiedTitlePenalty, titlePenalty)
+    if altTitle is not None:
+      detranslifiedAltTitlePenalty = computeTitlePenalty(altMediaName, altTitle)
+      altTitlePenalty = min(detranslifiedAltTitlePenalty, altTitlePenalty)
+  except:
+    Log.Error('Error during translitiration mediaName="%s".' % mediaName)
+
   titlePenalty = min(titlePenalty, altTitlePenalty)
   score = score - titlePenalty
 

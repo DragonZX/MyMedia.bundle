@@ -3,7 +3,7 @@
 # Title page tests.
 # @author zhenya (Yevgeny Nyden)
 #
-# Copyright (C) 2012  Zhenya Nyden
+# Copyright (C) 2013  Zhenya Nyden
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
