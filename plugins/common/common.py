@@ -229,7 +229,9 @@ def scoreMediaTitleMatch(mediaName, mediaYear, title, altTitle, year, itemIndex)
       We should also take into consideration order of words, so that "One Two" would not
       have the same score as "Two One". Also, taking into consideration year difference.
   """
-  Log.Debug('comparing "%s"-%s with "%s"-%s (%s)...' % (str(mediaName), str(mediaYear), str(title), str(year), str(altTitle)))
+  # TODO(zhenya): add logging that works in unit tests.
+#  Log.Debug('comparing item %d::: "%s-%s" with "%s-%s" (%s)...' %
+#      (itemIndex, str(mediaName), str(mediaYear), str(title), str(year), str(altTitle)))
   # Max score is when both title and year match exactly.
   score = 100
 
@@ -269,14 +271,14 @@ def scoreMediaTitleMatch(mediaName, mediaYear, title, altTitle, year, itemIndex)
       detranslifiedAltTitlePenalty = computeTitlePenalty(altMediaName, altTitle)
       altTitlePenalty = min(detranslifiedAltTitlePenalty, altTitlePenalty)
   except:
-    Log.Error('Error during translitiration mediaName="%s".' % mediaName)
+    pass
 
   titlePenalty = min(titlePenalty, altTitlePenalty)
   score = score - titlePenalty
 
   # IMPORTANT: always return an int.
   score = int(score)
-  Log.Debug('***** title scored %d' % score)
+#  Log.Debug('***** title scored %d' % score)
   return score
 
 
