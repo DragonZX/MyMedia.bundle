@@ -29,6 +29,9 @@ import pageparser # Expect KinoPoiskRu's code in classpath or in the same direct
 def suite(excludeRemoteTests = False):
   suite = unittest.TestSuite()
   suite.addTest(MiscTest('localTest_parsePosterThumbnailData_None'))
+  suite.addTest(MiscTest('localTest_computeTitlePenalty_simple'))
+  suite.addTest(MiscTest('localTest_computeTitlePenalty_negative'))
+  suite.addTest(MiscTest('localTest_computeTitlePenalty_partial'))
   suite.addTest(MiscTest('localTest_scoreMediaTitleMatch'))
   if not excludeRemoteTests:
     suite.addTest(MiscTest('remoteTest_fetchAndParseSearchResults'))
@@ -61,41 +64,79 @@ class MiscTest(U.PageTest):
     self._assertEquals('Д‘Артанян и три мушкетёра[кинокопилка].торрент',
         translit.detranslify(latinStr).encode('utf8'), 'Wrong translitirated string')
 
+  def localTest_computeTitlePenalty_simple(self):
+    """ Tests penalty for simple title cases.
+    """
+    penalty = common.computeTitlePenalty(u'Гладиаторы Рима', u'Гладиаторы Рима')
+    self._assertEquals(0, penalty, 'Should be no penalty.')
+    penalty = common.computeTitlePenalty(u'гладиаторы рима', u'Гладиаторы Рима')
+    self._assertEquals(0, penalty, 'Should be no penalty.')
+    penalty = common.computeTitlePenalty(u'ГЛАДИАТОРЫ РИМА', u'Гладиаторы Рима')
+    self._assertEquals(0, penalty, 'Should be no penalty.')
+    penalty = common.computeTitlePenalty(u'Гладиатору Рима', u'Гладиаторы Рима')
+    self._assertEquals(2, penalty, 'Wrong penalty.')
+    penalty = common.computeTitlePenalty(u'Гладиатору Рома', u'Гладиаторы Рима')
+    self._assertEquals(5, penalty, 'Wrong penalty.')
+    penalty = common.computeTitlePenalty(u'Кавказская пленница', u'пленница Кавказская')
+    self._assertEquals(18, penalty, 'Wrong penalty.')
+
+  def localTest_computeTitlePenalty_negative(self):
+    """ Tests penalty for titles that do NOT represent the same movie.
+    """
+    penalty = common.computeTitlePenalty(u'Неттакого фильма', u'Кавказская пленница')
+    self._assertEquals(34, penalty, 'Wrong penalty.')
+    penalty = common.computeTitlePenalty(u'some title', u'Кавказская пленница')
+    self._assertEquals(37, penalty, 'Wrong penalty.')
+    penalty = common.computeTitlePenalty(u'sometitle', u'Кавказская пленница, или Новые приключения Шурика')
+    self._assertEquals(40, penalty, 'Wrong penalty.')
+
+  def localTest_computeTitlePenalty_partial(self):
+    """ Tests penalty for partial matches.
+    """
+    penalty = common.computeTitlePenalty(u'Кавказская пленница', u'Кавказская пленница, или Новые приключения Шурика')
+    self._assertEquals(6, penalty, 'Wrong penalty.')
+    penalty = common.computeTitlePenalty(u'кавказская', u'Кавказская пленница, или Новые приключения Шурика')
+    self._assertEquals(8, penalty, 'Wrong penalty.')
+    penalty = common.computeTitlePenalty(u'кавказец', u'Кавказская пленница, или Новые приключения Шурика')
+    self._assertEquals(21, penalty, 'Wrong penalty.')
+
   def localTest_scoreMediaTitleMatch(self):
     score = common.scoreMediaTitleMatch('Gladiatory Rima', '2012', u'Гладиаторы Рима', 'Gladiatori di Roma', '2012', 3)
-    self._assertEquals(74, score, 'Wrong score.')
+    self._assertEquals(92, score, 'Wrong score.')
+    score = common.scoreMediaTitleMatch(u'Кавказская пленница', '1966', u'Кавказская пленница, или Новые приключения Шурика', None, '1966', 0)
+    self._assertEquals(94, score, 'Wrong score.')
 
   def remoteTest_fetchAndParseSearchResults(self):
     results = self.parser.fetchAndParseSearchResults(u'здравствуйте я ваша тетя', '1975')
     self.assertIsNotNone(results, 'results is None.')
     self._assertEquals(6, len(results), 'Wrong number of search results.')
-    self._assertTitleTuple(results[0], '77276', 'Здравствуйте, я ваша тетя! (ТВ)', '1975', 100)
-    self._assertTitleTuple(results[1], '196162', 'Мама Джек', '2005', 41)
-    self._assertTitleTuple(results[2], '18731', 'Здравствуйте, я ваша тетушка', '1998', 69)
-    self._assertTitleTuple(results[3], '325776', 'Здравствуйте, мы ваша крыша!', '2005', 57)
-    self._assertTitleTuple(results[4], '425067', 'Здравствуйте, я приехал!', '1979', 55)
+    self._assertTitleTuple(results[0], '77276', 'Здравствуйте, я ваша тетя! (ТВ)', '1975', 95)
+    self._assertTitleTuple(results[1], '196162', 'Мама Джек', '2005', 51)
+    self._assertTitleTuple(results[2], '18731', 'Здравствуйте, я ваша тетушка', '1998', 75)
+    self._assertTitleTuple(results[3], '325776', 'Здравствуйте, мы ваша крыша!', '2005', 67)
+    self._assertTitleTuple(results[4], '425067', 'Здравствуйте, я приехал!', '1979', 62)
     self._assertTitleTuple(results[5], '542384', 'Здравствуйте, тетя Лиса!', '1974', 75)
 
   def remoteTest_fetchAndParseSearchResults_latin(self):
     results = self.parser.fetchAndParseSearchResults('Gladiatory.Rima', '2012')
     self.assertIsNotNone(results, 'results is None.')
     self._assertEquals(5, len(results), 'Wrong number of search results.')
-    self._assertTitleTuple(results[0], '612070', 'Гладиаторы футбола (ТВ)', '2008', 43)
-    self._assertTitleTuple(results[1], '470718', 'У ворот Рима', '2004', 41)
-    self._assertTitleTuple(results[2], '346217', 'Andoroido gaaru Rima: Shirei onna-gokoro o insutooru seyo! (видео)', '2003', 39)
-    self._assertTitleTuple(results[3], '597580', 'Гладиаторы Рима', '2012', 54)
-    self._assertTitleTuple(results[4], '4682', 'Гладиатор', '1992', 35)
+    self._assertTitleTuple(results[0], '612070', 'Гладиаторы футбола (ТВ)', '2008', 72)
+    self._assertTitleTuple(results[1], '470718', 'У ворот Рима', '2004', 59)
+    self._assertTitleTuple(results[2], '346217', 'Andoroido gaaru Rima: Shirei onna-gokoro o insutooru seyo! (видео)', '2003', 48)
+    self._assertTitleTuple(results[3], '597580', 'Гладиаторы Рима', '2012', 89)
+    self._assertTitleTuple(results[4], '4682', 'Гладиатор', '1992', 65)
 
   def remoteTest_fetchAndParseSearchResults_latin2(self):
     results = self.parser.fetchAndParseSearchResults('zdravstvuete ya vasha tetya', '1975')
     self.assertIsNotNone(results, 'results is None.')
     self._assertEquals(6, len(results), 'Wrong number of search results.')
-    self._assertTitleTuple(results[0], '77276', 'Здравствуйте, я ваша тетя! (ТВ)', '1975', 90)
-    self._assertTitleTuple(results[1], '325776', 'Здравствуйте, мы ваша крыша!', '2005', 51)
-    self._assertTitleTuple(results[2], '279775', 'Ваша честь (сериал)', '2006', 49)
-    self._assertTitleTuple(results[3], '451394', 'Тётя Клава фон Геттен (ТВ)', '2009', 47)
-    self._assertTitleTuple(results[4], '424515', 'Ваша остановка, мадам! (ТВ)', '2009', 45)
-    self._assertTitleTuple(results[5], '455520', 'Суд (сериал)', '2009', 33)
+    self._assertTitleTuple(results[0], '77276', 'Здравствуйте, я ваша тетя! (ТВ)', '1975', 94)
+    self._assertTitleTuple(results[1], '325776', 'Здравствуйте, мы ваша крыша!', '2005', 69)
+    self._assertTitleTuple(results[2], '279775', 'Ваша честь (сериал)', '2006', 53)
+    self._assertTitleTuple(results[3], '451394', 'Тётя Клава фон Геттен (ТВ)', '2009', 44)
+    self._assertTitleTuple(results[4], '424515', 'Ваша остановка, мадам! (ТВ)', '2009', 46)
+    self._assertTitleTuple(results[5], '455520', 'Суд (сериал)', '2009', 40)
 
 
 ######## TESTS END HERE ######################################################

@@ -22,7 +22,7 @@
 # @author zhenya (Yevgeny Nyden)
 # @revision @REPOSITORY.REVISION@
 
-import sys, time, re, math, translit
+import sys, time, re, math, difflib, translit
 
 USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_3) AppleWebKit/537.22 (KHTML, like Gecko) Chrome/25.0.1364.172 Safari/537.22'
 #USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_2) AppleWebKit/534.51.22 (KHTML, like Gecko) Version/5.1.1 Safari/534.51.22'
@@ -247,9 +247,9 @@ def scoreMediaTitleMatch(mediaName, mediaYear, title, altTitle, year, itemIndex)
     if not yearDiff:
       yearPenalty = 0
     elif yearDiff == 1:
-      yearPenalty = int(SCORE_PENALTY_YEAR / 3)
+      yearPenalty = int(SCORE_PENALTY_YEAR / 4)
     elif yearDiff == 2:
-      yearPenalty = int(SCORE_PENALTY_YEAR / 2)
+      yearPenalty = int(SCORE_PENALTY_YEAR / 3)
   else:
     # If year is unknown, don't penalize the score too much.
     yearPenalty = int(SCORE_PENALTY_YEAR / 3)
@@ -275,6 +275,11 @@ def scoreMediaTitleMatch(mediaName, mediaYear, title, altTitle, year, itemIndex)
 
   titlePenalty = min(titlePenalty, altTitlePenalty)
   score = score - titlePenalty
+
+  # If the score is not high enough, add a few points to the first result -
+  # let's give KinoPoisk some credit :-).
+  if itemIndex == 0 and score <= 80:
+    score = score + 5
 
   # IMPORTANT: always return an int.
   score = int(score)
@@ -343,21 +348,39 @@ def toInteger(maybeNumber):
 
 def computeTitlePenalty(mediaName, title):
   """ Given media name and a candidate title, returns the title result score penalty.
+      @param mediaName Movie title parsed from the file system.
+      @param title Movie title from the website.
   """
   mediaName = mediaName.lower()
   title = title.lower()
   if mediaName != title:
-    # Look for title word matches.
-    words = mediaName.split()
-    wordMatches = 0
-    encodedTitle = title.encode(ENCODING_PLEX)
-    for word in words:
-      # NOTE(zhenya): using '\b' was troublesome (because of string encoding issues, I think).
-      matcher = re.compile('^(|.*[\W«])%s([\W»].*|)$' % word.encode(ENCODING_PLEX), re.UNICODE)
-      if matcher.search(encodedTitle) is not None:
-        wordMatches += 1
-    wordMatchesScore = float(wordMatches) / len(words)
-    return int((float(1) - wordMatchesScore) * SCORE_PENALTY_TITLE)
+    # First approximate the whole strings.
+    diffRatio = difflib.SequenceMatcher(None, mediaName, title).ratio()
+    penalty = int(SCORE_PENALTY_TITLE * (1 - diffRatio))
+
+    # If the penalty is more than 1/2 of max title penalty, check to see if
+    # this title starts with media name. This means that media name does not
+    # have the whole name of the movie - very common case. For example, media name
+    # "Кавказская пленница" for a movie title "Кавказская пленница, или Новые приключения Шурика".
+    if penalty >= 15: # This is so that we don't have to do the 'split' every time.
+      # Compute the scores of the
+      # First, check if the title starts with media name.
+      mediaNameParts = mediaName.split()
+      titleParts = title.split()
+      if len(mediaNameParts) <= len(titleParts):
+        i = 0
+        # Start with some small penalty, value of which depends on how
+        # many words media name has relative to the title's word count.
+        penaltyAlt = max(5, int(round((1.0 - (float(len(mediaNameParts)) / len(titleParts))) * 15 - 5)))
+        penaltyPerPart = SCORE_PENALTY_TITLE / len(mediaNameParts)
+        for mediaNamePart in mediaNameParts:
+          partDiffRatio = difflib.SequenceMatcher(None, mediaNamePart, titleParts[i]).ratio()
+          penaltyAlt = penaltyAlt + int(penaltyPerPart * (1 - partDiffRatio))
+          i = i + 1
+        penalty = min(penalty, penaltyAlt)
+#    print '++++++ DIFF("%s", "%s") = %g --> %d' % (mediaName.encode('utf8'), title.encode('utf8'), diffRatio, penalty)
+#    Log.Debug('++++++ DIFF("%s", "%s") = %g --> %d' % (mediaName.encode('utf8'), title.encode('utf8'), diffRatio, penalty))
+    return penalty
   return 0
 
 
