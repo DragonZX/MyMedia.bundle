@@ -86,6 +86,9 @@ class PageTest(unittest.TestCase):
     self.assertIn(key, data, '%s is not parsed.' % key)
     value = data[key]
     self.assertTrue(isinstance(value, types.ListType), '%s value is not a list.' % key)
+    if len(expected) != len(value):
+      self.fail('Wrong number of value items. Expected %d but was %d. Expected %s but was %s' %
+                (len(expected), len(value), common.arrayToUnicodeString(expected), common.arrayToUnicodeString(value)))
     self._assertEquals(len(expected), len(value), 'Wrong number of value items.')
     ind = 0
     for expectedItem in expected:

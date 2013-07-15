@@ -440,6 +440,20 @@ def getReOptionalGroup(matcher, str, groupInd):
         return groups[groupInd]
   return None
 
+
+def arrayToUnicodeString(array):
+  """ Converts an array to a string.
+  """
+  out = '['.encode('utf8')
+  ind = 0
+  for item in array:
+    out += item
+    if ind + 1 < len(array):
+      ind += 1
+      out += ', '.encode('utf8')
+  return out + ']'.encode('utf8')
+
+
 class HttpUtils():
   def __init__(self, encoding, userAgent):
     self.encoding = encoding
