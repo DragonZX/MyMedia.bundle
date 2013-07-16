@@ -111,21 +111,19 @@ class MiscTest(U.PageTest):
     self.assertIsNotNone(results, 'results is None.')
     self._assertEquals(6, len(results), 'Wrong number of search results.')
     self._assertTitleTuple(results[0], '77276', 'Здравствуйте, я ваша тетя! (ТВ)', '1975', 95)
-    self._assertTitleTuple(results[1], '196162', 'Мама Джек', '2005', 51)
+    self._assertTitleTuple(results[1], '15080', 'Мои ночи прекраснее ваших дней', '1989', 56)
     self._assertTitleTuple(results[2], '18731', 'Здравствуйте, я ваша тетушка', '1998', 75)
-    self._assertTitleTuple(results[3], '325776', 'Здравствуйте, мы ваша крыша!', '2005', 67)
-    self._assertTitleTuple(results[4], '425067', 'Здравствуйте, я приехал!', '1979', 62)
-    self._assertTitleTuple(results[5], '542384', 'Здравствуйте, тетя Лиса!', '1974', 75)
+    self._assertTitleTuple(results[3], '196162', 'Мама Джек', '2005', 47)
+    self._assertTitleTuple(results[4], '325776', 'Здравствуйте, мы ваша крыша!', '2005', 65)
 
   def remoteTest_fetchAndParseSearchResults_latin(self):
     results = self.parser.fetchAndParseSearchResults('Gladiatory.Rima', '2012')
     self.assertIsNotNone(results, 'results is None.')
-    self._assertEquals(5, len(results), 'Wrong number of search results.')
+    self._assertEquals(6, len(results), 'Wrong number of search results.')
     self._assertTitleTuple(results[0], '612070', 'Гладиаторы футбола (ТВ)', '2008', 72)
     self._assertTitleTuple(results[1], '470718', 'У ворот Рима', '2004', 59)
     self._assertTitleTuple(results[2], '346217', 'Andoroido gaaru Rima: Shirei onna-gokoro o insutooru seyo! (видео)', '2003', 48)
-    self._assertTitleTuple(results[3], '597580', 'Гладиаторы Рима', '2012', 89)
-    self._assertTitleTuple(results[4], '4682', 'Гладиатор', '1992', 65)
+    self._assertTitleTuple(results[3], '113717', 'El aprendiz de rimas', '2003', 56)
 
   def remoteTest_fetchAndParseSearchResults_latin2(self):
     results = self.parser.fetchAndParseSearchResults('zdravstvuete ya vasha tetya', '1975')
@@ -136,15 +134,14 @@ class MiscTest(U.PageTest):
     self._assertTitleTuple(results[2], '279775', 'Ваша честь (сериал)', '2006', 53)
     self._assertTitleTuple(results[3], '451394', 'Тётя Клава фон Геттен (ТВ)', '2009', 44)
     self._assertTitleTuple(results[4], '424515', 'Ваша остановка, мадам! (ТВ)', '2009', 46)
-    self._assertTitleTuple(results[5], '455520', 'Суд (сериал)', '2009', 40)
 
 
 ######## TESTS END HERE ######################################################
 
   def _assertTitleTuple(self, tuple, kinopoiskId, title, year, score):
-    self._assertEquals(kinopoiskId, tuple[0], 'Wrong kinopoisk id')
     self._assertEquals(title, tuple[1].encode('utf8'), 'Wrong title')
     self._assertEquals(year, tuple[2], 'Wrong year')
+    self._assertEquals(kinopoiskId, tuple[0], 'Wrong kinopoisk id')
     self._assertEquals(score, tuple[3], 'Wrong score')
 
 

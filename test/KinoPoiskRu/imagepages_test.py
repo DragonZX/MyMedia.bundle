@@ -97,15 +97,10 @@ class ImagePagesTest(U.PageTest):
     self.assertIn('posters', data, 'posters are not parsed.')
     posters = data['posters']
     self.assertIsNotNone(posters, 'posters data is present.')
-    self._assertEquals(21, len(posters), 'Wrong number of posters parsed.')
-    self.assertThumbnail(posters[0], 1, 0, # Note that index 0 is reserved for the main thumb.
-      'http://st.kinopoisk.ru/images/poster/sm_1440308.jpg',
-      'http://st-im.kinopoisk.ru/im/poster/1/4/4/kinopoisk.ru-The-Godfather-1440308.jpg',
-      800, 1174)
-    self.assertThumbnail(posters[20], 21, 0,
-      'http://st.kinopoisk.ru/images/poster/sm_430842.jpg',
-      'http://st-im.kinopoisk.ru/im/poster/4/3/0/kinopoisk.ru-The-Godfather-430842.jpg',
-      400, 707)
+    self._assertEquals(30, len(posters), 'Wrong number of posters parsed.')
+    self.assertThumbnailApprox(posters[0], 1, 0, # Note that index 0 is reserved for the main thumb.
+      'jpg', 'jpg')
+    self.assertThumbnailApprox(posters[20], 21, 0, 'jpg', 'jpg')
 
   def remoteTest_fetchAndParsePostersData_one(self):
     """ Tests the main poster parsing method with maxPosters=1. """
@@ -154,6 +149,25 @@ class ImagePagesTest(U.PageTest):
     self._assertEquals(url, thumb.url, 'Thumbnail %d - wrong url.' % index)
     self._assertEquals(width, thumb.width, 'Thumbnail %d - wrong width.' % index)
     self._assertEquals(height, thumb.height, 'Thumbnail %d - wrong height.' % index)
+
+  def assertThumbnailApprox(self, thumb, index, score, thumbUrlExt, urlExt):
+    self.assertIsNotNone(thumb, 'Thumbnail %d - is not set.' % index)
+    self._assertEquals(index, thumb.index, 'Thumbnail %d - wrong index.' % index)
+    self._assertEquals(score, thumb.score, 'Thumbnail %d - wrong score.' % index)
+    self.assertIsNotNone(thumb.thumbUrl, 'Thumbnail %d - thumb url is None.' % index)
+    self.assertTrue(thumb.thumbUrl.find('http://') == 0,
+        'Thumbnail %d - wrong thumb url: %s' % (index, thumb.thumbUrl))
+    self._assertEquals(thumbUrlExt, thumb.thumbUrl[len(thumb.thumbUrl) - len(thumbUrlExt):],
+      'Thumbnail %d - wrong thumb url extension.' % index)
+    self.assertIsNotNone(thumb.url, 'Thumbnail %d - url is None.' % index)
+    self.assertTrue(thumb.url.find('http://') == 0,
+        'Thumbnail %d - wrong url: %s' % (index, thumb.url))
+    self._assertEquals(urlExt, thumb.url[len(thumb.url) - len(urlExt):],
+        'Thumbnail %d - wrong url extension.' % index)
+    self.assertIsNotNone(thumb.width, 'Thumbnail width is None.')
+    self.assertTrue(thumb.width > 10, 'Thumbnail #%d width seems to be wrong: %d.' % (index, thumb.width))
+    self.assertIsNotNone(thumb.height, 'Thumbnail height is None.')
+    self.assertTrue(thumb.height > 10, 'Thumbnail #%d height seems to be wrong: %d.' % (index, thumb.height))
 
 
 if __name__ == '__main__':
