@@ -36,14 +36,18 @@ TITLE_PAGE_326 = 'data/title_326.html'
 # Russian movie film "...А зори здесь тихие" (1972).
 TITLE_PAGE_43395 = 'data/title_43395.html'
 
+# Movie to test the removal of "Слова" from "жанры" line.
+RUBEZH_ID = '683766'
+
 
 def suite(excludeRemoteTests = False):
   suite = unittest.TestSuite()
   suite.addTest(TitlePageTest('localTest_titlePage_basic'))
   suite.addTest(TitlePageTest('localTest_parseMainActorsFromLanding'))
   if not excludeRemoteTests:
-    suite.addTest(TitlePageTest('remoteTest_titlePage_basic'))
-    suite.addTest(TitlePageTest('remoteTest_parseMainActorsFromLanding'))
+#    suite.addTest(TitlePageTest('remoteTest_titlePage_basic'))
+#    suite.addTest(TitlePageTest('remoteTest_parseMainActorsFromLanding'))
+    suite.addTest(TitlePageTest('remoteTest_verifySlovaRemovalFromGenre'))
   return suite
 
 
@@ -84,6 +88,13 @@ class TitlePageTest(U.PageTest):
     page = self.http.requestAndParseHtmlPage(S.KINOPOISK_TITLE_PAGE_URL % MEDVED_ID)
     actors = self.parser.parseMainActorsFromLanding(page)
     self._assertTitlePageActors22907(actors)
+
+  def remoteTest_verifySlovaRemovalFromGenre(self):
+    """ Test removal of Слова from жанры. """
+    data = {}
+    page = self.http.requestAndParseHtmlPage(S.KINOPOISK_TITLE_PAGE_URL % RUBEZH_ID)
+    self.parser.parseTitlePageInfoTable(data, page)
+    self.assertKeyArrayValue(data, 'genres', ['Боевик', 'Криминал'])
 
 
   ######## TESTS END HERE ######################################################
