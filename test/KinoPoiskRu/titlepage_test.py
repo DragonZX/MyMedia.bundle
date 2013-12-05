@@ -96,7 +96,7 @@ class TitlePageTest(U.PageTest):
     self.assertKeyValue(data, 'title', 'Медведь')
     self.assertKeyValue(data, 'originalTitle', 'L\'ours')
     self.assertKeyValue(data, 'year', 1988)
-    self.assertKeyValue(data, 'tagline', 'He\'s an orphan... at the start of a journey. A journey to survive.')
+    self.assertKeyValue(data, 'tagline', 'He\'s an orphan... at the start of a journey. A journey to survive')
     self.assertKeyArrayValue(data, 'directors', ['Жан-Жак Анно'])
     self.assertKeyArrayValue(data, 'countries', ['Франция', 'США'])
     self.assertKeyArrayValue(data, 'writers', ['Жерар Браш', 'Джеймс Оливер Кёрвуд'])
@@ -106,10 +106,10 @@ class TitlePageTest(U.PageTest):
     self.assertKeyValue(data, 'summary', 'Среди прекрасных и величественных пейзажей Британской Колумбии случилась', True)
     self.assertKeyValue(data, 'duration', 5640000)
     self.assertKeyValue(data, 'originalDate', datetime.datetime(1988, 10, 19).date())
-    self.assertKeyValueApproximateNumber(data, 'rating', 8.1, isFloat=True)
-    self.assertKeyValueApproximateNumber(data, 'ratingCount', 6707)
+    self.assertKeyValueApproximateNumber(data, 'rating', 8.272, isFloat=True)
+    self.assertKeyValueApproximateNumber(data, 'ratingCount', 8043)
     self.assertKeyValueApproximateNumber(data, 'imdbRating', 7.60, isFloat=True)
-    self.assertKeyValueApproximateNumber(data, 'imdbRatingCount', 8942)
+    self.assertKeyValueApproximateNumber(data, 'imdbRatingCount', 9168)
 
   def _assertTitlePageActors22907(self, actors):
     self.assertIsNotNone(actors, 'actors is None.')

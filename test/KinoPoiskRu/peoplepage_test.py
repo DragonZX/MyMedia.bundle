@@ -132,7 +132,7 @@ class PeoplePageTest(U.PageTest):
     self._assertActor(actors, 40, 'Дэнни Карни', 'Nazi SS Guard') # Should have no ', в титрах не указана'.
 
   def _assertActorsFromPageWallE(self, actors):
-    self._assertActor(actors, 0, 'Бен Бертт', 'WALL·E, M-O, озвучка')
+    self._assertActor(actors, 0, 'Бен Бертт', 'WALLВ·E, M-O, озвучка')
     self._assertActor(actors, 1, 'Элисса Найт', 'EVE, озвучка')
     self._assertActor(actors, 2, 'Джефф Гарлин', 'Captain, озвучка')
     self._assertActor(actors, 3, 'Фред Уиллард', 'Shelby Forthright, BnL CEO')

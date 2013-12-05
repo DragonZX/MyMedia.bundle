@@ -80,15 +80,15 @@ class ImagePagesTest(U.PageTest):
     self.assertIn('posters', data, 'posters are not parsed.')
     posters = data['posters']
     self.assertIsNotNone(posters, 'posters data is present.')
-    self._assertEquals(10, len(posters), 'Wrong number of posters parsed.')
+    self._assertEquals(11, len(posters), 'Wrong number of posters parsed.')
     self.assertThumbnail(posters[0], 1, 0, # Note that index 0 is reserved for the main thumb.
-      'http://st.kinopoisk.ru/images/poster/sm_1915796.jpg',
-      'http://st-im.kinopoisk.ru/im/poster/1/9/1/kinopoisk.ru-Ivan-Vasilevich-menyaet-professiyu-1915796.jpg',
-      564, 837)
+      'http://st.kinopoisk.ru/images/poster/sm_2209261.jpg',
+      'http://st-im.kinopoisk.ru/im/poster/2/2/0/kinopoisk.ru-Ivan-Vasilevich-menyaet-professiyu-2209261.jpg',
+      360, 573)
     self.assertThumbnail(posters[7], 8, 0,
-      'http://st.kinopoisk.ru/images/poster/sm_1351544.jpg',
-      'http://st-im.kinopoisk.ru/im/poster/1/3/5/kinopoisk.ru-Ivan-Vasilevich-menyaet-professiyu-1351544.jpg',
-      600, 854)
+      'http://st.kinopoisk.ru/images/poster/sm_1351545.jpg',
+      'http://st-im.kinopoisk.ru/im/poster/1/3/5/kinopoisk.ru-Ivan-Vasilevich-menyaet-professiyu-1351545.jpg',
+      600, 862)
 
   def remoteTest_parsePosterThumbnailData_eng(self):
     """ Tests a poster page for an English movie title loaded from kinopoisk.ru. """

@@ -109,12 +109,11 @@ class MiscTest(U.PageTest):
   def remoteTest_fetchAndParseSearchResults(self):
     results = self.parser.fetchAndParseSearchResults(u'здравствуйте я ваша тетя', '1975')
     self.assertIsNotNone(results, 'results is None.')
-    self._assertEquals(6, len(results), 'Wrong number of search results.')
+    self._assertEquals(5, len(results), 'Wrong number of search results.')
     self._assertTitleTuple(results[0], '77276', 'Здравствуйте, я ваша тетя! (ТВ)', '1975', 95)
-    self._assertTitleTuple(results[1], '15080', 'Мои ночи прекраснее ваших дней', '1989', 56)
-    self._assertTitleTuple(results[2], '18731', 'Здравствуйте, я ваша тетушка', '1998', 75)
-    self._assertTitleTuple(results[3], '196162', 'Мама Джек', '2005', 47)
-    self._assertTitleTuple(results[4], '325776', 'Здравствуйте, мы ваша крыша!', '2005', 65)
+    self._assertTitleTuple(results[1], '18731', 'Здравствуйте, я ваша тетушка', '1998', 77)
+    self._assertTitleTuple(results[2], '325776', 'Здравствуйте, мы ваша крыша!', '2005', 69)
+    self._assertTitleTuple(results[3], '425067', 'Здравствуйте, я приехал!', '1979', 64)
 
   def remoteTest_fetchAndParseSearchResults_latin(self):
     results = self.parser.fetchAndParseSearchResults('Gladiatory.Rima', '2012')
@@ -123,7 +122,7 @@ class MiscTest(U.PageTest):
     self._assertTitleTuple(results[0], '612070', 'Гладиаторы футбола (ТВ)', '2008', 72)
     self._assertTitleTuple(results[1], '470718', 'У ворот Рима', '2004', 59)
     self._assertTitleTuple(results[2], '346217', 'Andoroido gaaru Rima: Shirei onna-gokoro o insutooru seyo! (видео)', '2003', 48)
-    self._assertTitleTuple(results[3], '113717', 'El aprendiz de rimas', '2003', 56)
+    self._assertTitleTuple(results[3], '597580', 'Гладиаторы Рима', '2012', 89)
 
   def remoteTest_fetchAndParseSearchResults_latin2(self):
     results = self.parser.fetchAndParseSearchResults('zdravstvuete ya vasha tetya', '1975')
