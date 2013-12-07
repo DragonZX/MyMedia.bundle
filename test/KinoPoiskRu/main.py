@@ -22,7 +22,8 @@
 #
 
 import unittest, sys
-import testlog, testutil as U, titlepage_test, studiopage_test, peoplepage_test, imagepages_test, misc_test
+import testlog, testutil as U, titlepage_test, studiopage_test, \
+  pageparser_test, peoplepage_test, imagepages_test, misc_test
 
 
 if __name__ == '__main__':
@@ -36,6 +37,9 @@ if __name__ == '__main__':
   exitCode = U.getExitCode(result)
 
   result = runner.run(studiopage_test.suite(options.excludeRemote))
+  exitCode |= U.getExitCode(result)
+
+  result = runner.run(pageparser_test.suite(options.excludeRemote))
   exitCode |= U.getExitCode(result)
 
   result = runner.run(peoplepage_test.suite(options.excludeRemote))

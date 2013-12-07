@@ -190,6 +190,17 @@ def getWin1252ResponseFromHttpRequest(url):
   return None
 
 
+def printSearchArrayResults(results):
+  """ Sends a list of media array results to debug log.
+  """
+  Log.Debug('Search produced %d results:' % len(results))
+  index = -1
+  for result in results:
+    index += 1
+    Log.Debug(' ... %d: id="%s", name="%s", year="%s", score="%d".' %
+        (index, result[0], result[1], str(result[2]), result[3]))
+
+
 def printSearchResults(results):
   """ Sends a list of media results to debug log.
   """
@@ -334,6 +345,15 @@ def scoreThumbnailResult(thumb, isPoster):
   thumb.score = int(score)
 
 
+def isAsciiString(mediaName):
+  """ Returns True if all characters of the string are ASCII.
+  """
+  for char in mediaName:
+    if ord(char) >= 128:
+      return False
+  return True
+
+
 def toInteger(maybeNumber):
   """ Returns the argument converted to an integer if it represents a number
       or None if the argument is None or does not represent a number.
@@ -402,6 +422,18 @@ def getXpathOptionalText(elem, xpath):
   if len(valueElems) > 0:
     return valueElems[0].strip()
   return None
+
+
+def parseYearFromString(yearString):
+  """ Given a string, parses a year from it (4 consecutive digits).
+  """
+  if yearString is None:
+    return None
+
+  match = re.search('[^\d]*?(\d\d\d\d).*', yearString)
+  if match is None:
+    return None
+  return match.groups(1)[0]
 
 
 def getXpathOptionalNodeStrings(elem, xpath):

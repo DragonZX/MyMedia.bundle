@@ -106,6 +106,9 @@ class PageTest(unittest.TestCase):
   def _assertEquals(self, expected, fact, msg):
     self.assertTrue(expected == fact, msg + ' Expected "' + str(expected) + '", but was "' + str(fact) + '".')
 
+  def _assertNotLessThen(self, expected, fact, msg):
+    self.assertTrue(fact >= expected, msg + ' Expected at least "' + str(expected) + '", but was "' + str(fact) + '".')
+
 
 class TestHttp():
   def __init__(self, encoding, userAgent):
