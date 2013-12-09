@@ -348,7 +348,7 @@ def scoreThumbnailResult(thumb, isPoster):
 def isAsciiString(mediaName):
   """ Returns True if all characters of the string are ASCII.
   """
-  for char in mediaName:
+  for index, char in enumerate(mediaName):
     if ord(char) >= 128:
       return False
   return True
