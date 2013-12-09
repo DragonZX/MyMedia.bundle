@@ -4,7 +4,7 @@
 в директорию плагинов сервера Плекс.
 
 На Маке это скорей всего может находиться здесь:
-/Users/***Your User Name***/Library/Application Support/Plex Media Server/Plug-ins/
+~/Library/Application Support/Plex Media Server/Plug-ins/
 
 На Винде это может быть:
 C:\Users\***Your User Name***\AppData\Local\Plex Media Server\Plug-ins\
