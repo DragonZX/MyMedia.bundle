@@ -58,7 +58,7 @@ def searchForImdbTitles(mediaName, mediaYear, lang):
       except:
         Log.Warn('failed to parse movie element')
 
-    return matches
+  return matches
 
 
 def findBestTitleMatch(mediaName, mediaYear, lang):
